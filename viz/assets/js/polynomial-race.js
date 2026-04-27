@@ -21,7 +21,7 @@ const PolynomialRaceViz = (() => {
   let els = {};
 
   const loadData = async () => {
-    const response = await fetch('./assets/data/polynomial_frames.json');
+    const response = await fetch('assets/data/polynomial_frames.json');
     data = await response.json();
   };
 

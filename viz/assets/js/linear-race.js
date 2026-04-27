@@ -26,7 +26,7 @@ const LinearRaceViz = (() => {
   let els = {};
 
   const loadData = async () => {
-    const response = await fetch('./assets/data/linear_frames.json');
+    const response = await fetch('assets/data/linear_frames.json');
     data = await response.json();
   };
 

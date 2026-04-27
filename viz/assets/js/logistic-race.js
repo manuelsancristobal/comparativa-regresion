@@ -28,7 +28,7 @@ const LogisticRaceViz = (() => {
   let els = {};
 
   const loadData = async () => {
-    const response = await fetch('./assets/data/logistic_frames.json');
+    const response = await fetch('assets/data/logistic_frames.json');
     data = await response.json();
   };
 

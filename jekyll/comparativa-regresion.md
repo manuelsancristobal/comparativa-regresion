@@ -20,6 +20,18 @@ Este proyecto es una **visualización interactiva** que demuestra que lineal y p
 
 Usa el dataset **California Housing** (~20,640 viviendas) para mostrar cómo 3 técnicas distintas convergen a la misma solución, o por qué Newton-Raphson necesita 5-10 iteraciones mientras el gradiente necesita miles.
 
+## Visualización Interactiva
+
+<div style="position: relative; width: 100%; padding-bottom: 75%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+  <iframe
+    src="/proyectos/comparativa-regresion/viz.html"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+    loading="lazy"
+    title="Comparativa de Métodos de Regresión"
+    allowfullscreen>
+  </iframe>
+</div>
+
 ---
 
 ## Sección 1: Regresión Lineal
