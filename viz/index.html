@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparativa de Regresión - Visualización Interactiva</title>
+    <link rel="stylesheet" href="assets/css/regression.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header class="container">
+        <h1>Comparativa de Métodos de Regresión</h1>
+        <p>Visualización interactiva de tres tipos de regresión: lineal, polinómica y logística</p>
+    </header>
+
+    <div class="container">
+        <!-- Seccion 1: Regresion Lineal -->
+        <section id="section-linear">
+            <h2>Sección 1: Regresión Lineal</h2>
+            <p class="section-description">
+                Comparación de 3 métodos para resolver regresión lineal ordinaria (OLS):
+                <strong>analítica</strong> (ecuación normal), <strong>gradiente descendente</strong> y <strong>scikit-learn</strong>.
+                Observa cómo las rectas oscilan con pocos datos y convergen a la misma solución conforme se agregan puntos.
+            </p>
+
+            <div id="controls-linear"></div>
+            <div id="methods-linear"></div>
+
+            <div class="panels">
+                <div class="panel" id="panel-a"></div>
+                <div class="panel" id="panel-b"></div>
+                <div class="panel" id="panel-c"></div>
+            </div>
+
+            <div class="annotation">
+                <strong>Insight:</strong> La solución analítica (azul) es instantánea porque resuelve directamente (X^T X)^-1 X^T y.
+                El gradiente (rojo) se mueve iterativamente "cuesta abajo" por la superficie de error.
+                Ambos convergen exactamente al mismo punto porque OLS tiene una solución única.
+            </div>
+        </section>
+
+        <!-- Seccion 2: Regresion Polinomica -->
+        <section id="section-polynomial">
+            <h2>Sección 2: Regresión Polinómica</h2>
+            <p class="section-description">
+                La regresión polinómica <strong>no es un modelo nuevo</strong> — es regresión lineal en un espacio transformado.
+                La matriz de Vandermonde [1, x, x², x³] transforma el problema a OLS ordinario.
+                Observa cómo el grado 4 oscila con pocos datos (overfitting) pero converge con más puntos.
+            </p>
+
+            <div id="controls-poly"></div>
+            <div id="methods-poly"></div>
+
+            <div class="panels">
+                <div class="panel" id="panel-a-poly"></div>
+                <div class="panel" id="panel-b-poly"></div>
+                <div class="panel" id="panel-c-poly"></div>
+            </div>
+
+            <div class="annotation">
+                <strong>Insight:</strong> Grado 2 tiene alto sesgo (curva rígida), grado 4 tiene alta varianza (oscila).
+                En el Panel B ves el <strong>bias-variance tradeoff</strong> en vivo: el grado 3 equilibra ambos.
+                Este es exactamente el problema que <strong>Ridge</strong> resuelve penalizando coeficientes grandes.
+            </div>
+        </section>
+
+        <!-- Seccion 3: Regresion Logistica -->
+        <section id="section-logistic">
+            <h2>Sección 3: Regresión Logística</h2>
+            <p class="section-description">
+                En regresión logística no predecimos un valor continuo sino una <strong>probabilidad</strong> via sigmoid.
+                Comparamos <strong>gradiente descendente</strong>, <strong>Newton-Raphson</strong> (convergencia cuadrática) y <strong>scikit-learn</strong>.
+                El dataset es clasificación binaria: vivienda cara (≥ mediana) vs barata (< mediana).
+            </p>
+
+            <div id="controls-logistic"></div>
+            <div id="methods-logistic"></div>
+
+            <div class="panels">
+                <div class="panel" id="panel-a-logistic"></div>
+                <div class="panel" id="panel-b-logistic"></div>
+                <div class="panel" id="panel-c-logistic"></div>
+            </div>
+
+            <div class="annotation">
+                <strong>Insight:</strong> Newton-Raphson (azul) converge en ~5-10 iteraciones mientras gradiente (rojo) necesita miles.
+                La Hessiana le da información de <strong>curvatura</strong> que GD no tiene — es como tener un mapa topográfico vs caminar a ciegas.
+                Usa <strong>log-loss</strong>, no MSE, porque los gradientes de sigmoid + MSE se aplanan en los extremos.
+            </div>
+        </section>
+
+        <!-- Tabla Comparativa -->
+        <section id="section-summary">
+            <h2>Resumen Comparativo</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Característica</th>
+                        <th>Regresión Lineal</th>
+                        <th>Regresión Polinómica</th>
+                        <th>Regresión Logística</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Tipo de Problema</strong></td>
+                        <td>Predicción continua</td>
+                        <td>Predicción continua (no lineal)</td>
+                        <td>Clasificación binaria</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Función de Costo</strong></td>
+                        <td>MSE (suma de cuadrados)</td>
+                        <td>MSE (suma de cuadrados)</td>
+                        <td>Log-loss (cross-entropy)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Optimización</strong></td>
+                        <td>Ecuación normal O(n³), GD O(n·iteraciones)</td>
+                        <td>Ecuación normal O(n³), GD O(n·iteraciones)</td>
+                        <td>GD O(n·iteraciones), Newton-Raphson O(n³·iteraciones)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>R² / Accuracy</strong></td>
+                        <td>0.47 (débil pero interpretable)</td>
+                        <td>Mejora con grado, pero overfitting</td>
+                        <td>~80% accuracy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Supuestos Clave</strong></td>
+                        <td>Linealidad, errores normales, homocedasticidad</td>
+                        <td>Linealidad (en espacio transformado)</td>
+                        <td>Independencia, relación lineal en log-odds</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Regularización</strong></td>
+                        <td>Ridge/Lasso para multicolinealidad</td>
+                        <td>Ridge/Lasso para penalizar coeficientes altos</td>
+                        <td>L2 (C=1.0 por defecto en sklearn)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="annotation">
+                <strong>Limitaciones Detectadas:</strong>
+                <ul>
+                    <li>MedHouseVal está capped en 5.0 → viola linealidad en extremo superior</li>
+                    <li>MedInc se usa tanto en lineal como polinómica — la relación no lineal con precio justifica el polinomio</li>
+                    <li>MedInc + AveRooms están correlacionadas → multicolinealidad en logística</li>
+                </ul>
+            </div>
+
+            <div class="annotation info">
+                <strong>Conclusión:</strong> Lineal y polinómica resuelven el mismo OLS en distintos espacios.
+                Logística cambia la función de costo (MLE en vez de OLS) pero comparte métodos de optimización (GD, Newton).
+                <strong>Entender optimización es la base de todo esto.</strong>
+            </div>
+        </section>
+    </div>
+
+    <footer class="container">
+        <p>Proyecto de visualización interactiva de métodos de regresión con D3.js</p>
+        <p>Dataset: California Housing (scikit-learn) | Métodos: NumPy, scikit-learn, D3.js</p>
+    </footer>
+
+    <!-- D3.js and visualization scripts -->
+    <script src="assets/js/common.js"></script>
+    <script src="assets/js/linear-race.js"></script>
+    <script src="assets/js/polynomial-race.js"></script>
+    <script src="assets/js/logistic-race.js"></script>
+</body>
+</html>
