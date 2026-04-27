@@ -512,7 +512,7 @@ def build_logistic_frames(data_logistic):
     scatter_idx = _compute_scatter_indices(len(y_train))
 
     frames = []
-    for i, n_points in enumerate(n_points_seq):
+    for _, n_points in enumerate(n_points_seq):
         X_sub = X_train[:n_points]
         y_sub = y_train[:n_points]
 
