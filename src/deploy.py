@@ -53,19 +53,18 @@ def deploy_to_jekyll():
             shutil.copy2(js_file, JEKYLL_JS / js_file.name)
             print(f"  {js_file.name}")
 
-    # Copy HTML visualization
-    print(f"Copying HTML to {JEKYLL_BASE}...")
-    html_file = VIZ_DIR / "index.html"
-    if html_file.exists():
-        viz_html = JEKYLL_BASE / "viz.html"
-        shutil.copy2(html_file, viz_html)
-        print("  viz.html")
+    # Copy HTML visualizations
+    print(f"Copying HTML files to {JEKYLL_BASE}...")
+    for html_file in VIZ_DIR.glob("*.html"):
+        shutil.copy2(html_file, JEKYLL_BASE / html_file.name)
+        print(f"  {html_file.name}")
 
     # Copy Jekyll page
+    print(f"Copying Jekyll project page to {JEKYLL_PAGE}...")
     jekyll_md = Path(__file__).parent.parent / "jekyll" / "comparativa-regresion.md"
     if jekyll_md.exists():
         shutil.copy2(jekyll_md, JEKYLL_PAGE / "comparativa-regresion.md")
-        print("  jekyll/comparativa-regresion.md")
+        print("  comparativa-regresion.md")
 
     print("✓ Deployment complete!")
 

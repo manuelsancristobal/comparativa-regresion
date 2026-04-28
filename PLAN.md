@@ -85,13 +85,10 @@ La pagina tiene 3 secciones independientes, cada una con su propia animacion y c
 
 **Nota narrativa**: Texto explicando por que se usa log-loss en vez de MSE (gradientes de sigmoid + MSE se aplanan, log-loss no). Mencion de que sklearn agrega regularizacion L2 por defecto — por eso sus coeficientes pueden diferir levemente de las implementaciones manuales
 
-### Seccion Final: Tabla Comparativa Resumen
-- Tabla estatica con metricas finales de los 3 tipos
-- Complejidad computacional O-notation
-- Fila de **supuestos** por tipo: linealidad, homocedasticidad, normalidad de residuos (lineal); mismos + riesgo de overfitting por grado (polinomica); independencia de observaciones, no multicolinealidad severa (logistica)
-- Fila de **limitaciones detectadas**: ej. MedHouseVal esta capped en 5.0 (viola linealidad en el extremo superior), Latitude como unica feature no captura la geografia real (longitud importa)
-- Mencion de **regularizacion**: Ridge/Lasso para polinomica, parametro C para logistica — y por que importa cuando los coeficientes crecen (conecta con Panel C de seccion 2)
-- Conclusiones (adaptadas del notebook)
+### Seccion 5: Despliegue Intercalado en Jekyll
+- En lugar de un iframe único, las secciones se despliegan de forma independiente.
+- Archivos generados: `linear.html`, `polynomial.html`, `logistic.html`.
+- Cada archivo se inserta en su sección correspondiente del análisis en la página del proyecto de Jekyll, permitiendo una lectura intercalada de teoría y visualización.
 
 ---
 
@@ -311,7 +308,7 @@ Adaptar `barchart.css`:
   - El hilo conductor: lineal y polinomica comparten OLS como fundamento, logistica introduce MLE (Maximum Likelihood), pero las tres comparten los mismos metodos de optimizacion (ecuacion normal, gradiente descendente, Newton-Raphson) — esa es la conexion real
 
   **Seccion 1 — Regresion Lineal**:
-  - Iframe unico que carga `viz.html` completo (patron Barchart Race). El usuario hace scroll dentro del iframe para navegar las 3 secciones. No se usan hash anchors separados
+  - Iframes independientes para cada sección. Cada una carga su correspondiente archivo HTML (`linear.html`, `polynomial.html`, `logistic.html`).
   - Insights de descubrimiento, ejemplo de tono:
     - "Al observar la animacion, lo primero que salta a la vista es que la linea roja (gradiente) se mueve erráticamente al inicio pero termina exactamente donde la azul (analitica) ya estaba desde el frame 1. Esto no es coincidencia..."
     - Por que la solucion analitica es instantanea (ecuacion normal resuelve en un paso)

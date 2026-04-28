@@ -3,7 +3,7 @@ layout: project
 title: Comparativa de Métodos de Regresión
 category: Machine Learning
 description: Visualización interactiva D3.js comparando 3 tipos de regresión (lineal, polinómica, logística) con animaciones de convergencia
-github_url: https://github.com/manuelsancristobal
+github_url: https://github.com/manuelsancristobal/comparativa-regresion
 tech_stack:
   - Python
   - NumPy
@@ -20,21 +20,19 @@ Este proyecto es una **visualización interactiva** que demuestra que lineal y p
 
 Usa el dataset **California Housing** (~20,640 viviendas) para mostrar cómo 3 técnicas distintas convergen a la misma solución, o por qué Newton-Raphson necesita 5-10 iteraciones mientras el gradiente necesita miles.
 
-## Visualización Interactiva
-
-<div style="position: relative; width: 100%; padding-bottom: 75%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-  <iframe
-    src="/proyectos/comparativa-regresion/viz.html"
-    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
-    loading="lazy"
-    title="Comparativa de Métodos de Regresión"
-    allowfullscreen>
-  </iframe>
-</div>
-
 ---
 
 ## Sección 1: Regresión Lineal
+
+<div class="viz-container" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+  <iframe
+    src="/proyectos/comparativa-regresion/linear.html"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+    loading="lazy"
+    title="Regresión Lineal"
+    allowfullscreen>
+  </iframe>
+</div>
 
 ### La Historia
 
@@ -75,6 +73,16 @@ El modelo funciona, pero estas violaciones explican por qué R² no pasa de 0.47
 ---
 
 ## Sección 2: Regresión Polinómica
+
+<div class="viz-container" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+  <iframe
+    src="/proyectos/comparativa-regresion/polynomial.html"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+    loading="lazy"
+    title="Regresión Polinómica"
+    allowfullscreen>
+  </iframe>
+</div>
 
 ### La Revelación
 
@@ -117,6 +125,16 @@ Grado 3 equilibra ambos.
 ---
 
 ## Sección 3: Regresión Logística
+
+<div class="viz-container" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+  <iframe
+    src="/proyectos/comparativa-regresion/logistic.html"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+    loading="lazy"
+    title="Regresión Logística"
+    allowfullscreen>
+  </iframe>
+</div>
 
 ### El Cambio de Paradigma
 
