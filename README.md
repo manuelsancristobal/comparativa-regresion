@@ -1,7 +1,10 @@
 # Comparativa de Regresión - Visualización Interactiva
 
+## Contexto
+Este proyecto nació el año 2025, en esa época buscaba proyectos elementales que cualquier científico de datos debería desarrollar sin inconvenientes, alerta de spoiler, hubo muchos inconvenientes, pero con esta animación logré 27 mil impresiones en LinkedIn, cosa que nunca más repetí pero me dio envión para continuar. 
+
 ## Impacto y Valor del Proyecto
-Este proyecto proporciona una herramienta educativa e interactiva para comprender profundamente el comportamiento de los algoritmos fundamentales de aprendizaje supervisado. Al visualizar en tiempo real cómo convergen diferentes métodos de optimización (Analítico, Gradiente Descendente, Newton-Raphson), se facilita la intuición técnica sobre conceptos críticos como el *overfitting*, la regularización y la eficiencia computacional. Es una pieza clave para demostrar la capacidad de traducir modelos matemáticos complejos en interfaces visuales accionables y comprensibles para perfiles no técnicos.
+Este proyecto es una herramienta educativa e interactiva para comprender el comportamiento de los algoritmos fundamentales de aprendizaje supervisado. Al visualizar en tiempo real cómo convergen diferentes métodos de optimización (Analítico, Gradiente Descendente, Newton-Raphson), facilita tu intuición sobre conceptos críticos como el *overfitting*, la regularización y la eficiencia computacional. Es una pieza clave para demostrar la capacidad de traducir modelos matemáticos complejos en interfaces visuales comprensibles para perfiles no técnicos.
 
 ## Stack Tecnológico
 - **Lenguaje**: Python 3.10+

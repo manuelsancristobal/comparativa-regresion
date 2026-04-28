@@ -21,9 +21,7 @@ def prepare_linear_data(df):
     x = df[["MedInc"]].values
     y = df["MedHouseVal"].values
 
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, train_size=TRAIN_TEST_SPLIT, random_state=RANDOM_SEED
-    )
+    x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=TRAIN_TEST_SPLIT, random_state=RANDOM_SEED)
 
     # Normalize features using train data
     scaler = StandardScaler()
@@ -43,9 +41,7 @@ def prepare_polynomial_data(df):
     x = df[["MedInc"]].values
     y = df["MedHouseVal"].values
 
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, train_size=TRAIN_TEST_SPLIT, random_state=RANDOM_SEED
-    )
+    x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=TRAIN_TEST_SPLIT, random_state=RANDOM_SEED)
 
     # Normalize features using train data
     scaler = StandardScaler()
@@ -69,9 +65,7 @@ def prepare_logistic_data(df):
     # Features: MedInc, HouseAge, AveRooms
     x = df[["MedInc", "HouseAge", "AveRooms"]].values
 
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, train_size=TRAIN_TEST_SPLIT, random_state=RANDOM_SEED
-    )
+    x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=TRAIN_TEST_SPLIT, random_state=RANDOM_SEED)
 
     # Normalize features using train data
     scaler = StandardScaler()

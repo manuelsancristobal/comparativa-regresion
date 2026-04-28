@@ -232,12 +232,10 @@ def compute_logistic_gd(X_train, y_train, X_test, y_test, lr=None, n_iters=None)
 
             # Log loss
             log_loss_train = -np.mean(
-                y_train * np.log(y_pred_train + 1e-15)
-                + (1 - y_train) * np.log(1 - y_pred_train + 1e-15)
+                y_train * np.log(y_pred_train + 1e-15) + (1 - y_train) * np.log(1 - y_pred_train + 1e-15)
             )
             log_loss_test = -np.mean(
-                y_test * np.log(y_pred_test + 1e-15)
-                + (1 - y_test) * np.log(1 - y_pred_test + 1e-15)
+                y_test * np.log(y_pred_test + 1e-15) + (1 - y_test) * np.log(1 - y_pred_test + 1e-15)
             )
 
             history.append(
@@ -300,12 +298,9 @@ def compute_logistic_newton(X_train, y_train, X_test, y_test, n_iters=None):
         y_pred_test = sigmoid(z_test)
 
         log_loss_train = -np.mean(
-            y_train * np.log(y_pred_train + 1e-15)
-            + (1 - y_train) * np.log(1 - y_pred_train + 1e-15)
+            y_train * np.log(y_pred_train + 1e-15) + (1 - y_train) * np.log(1 - y_pred_train + 1e-15)
         )
-        log_loss_test = -np.mean(
-            y_test * np.log(y_pred_test + 1e-15) + (1 - y_test) * np.log(1 - y_pred_test + 1e-15)
-        )
+        log_loss_test = -np.mean(y_test * np.log(y_pred_test + 1e-15) + (1 - y_test) * np.log(1 - y_pred_test + 1e-15))
 
         history.append(
             {
