@@ -1,28 +1,28 @@
-# Evolución del Proyecto
+# Changelog
 
-## v1 — Pipeline ETL + Visualización D3.js interactiva
+En este archivo puedes encontrar todos los cambios notables de este proyecto.
+Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
-### Problema
-El notebook original solo cubría regresión lineal simple con 3 métodos sobre el dataset Diabetes (442 filas). No tenía estructura de proyecto, tests, ni despliegue automatizado.
+## [Unreleased]
 
-### Decisiones de diseño
-- Expansión del notebook original (solo regresión lineal) a 3 tipos de regresión: lineal, polinómica y logística
-- Migración de dataset Diabetes (442 filas, BMI → target) a California Housing (20,640 filas, 8 features)
-- Pipeline ETL modular (extract → transform → load) siguiendo el patrón de barchart-race
-- Visualización D3.js con 3 secciones y controles interactivos (scroll vertical)
-- Cada sección con 3 paneles sincronizados: visualización principal, métrica de convergencia, información adicional
+## [1.0.0] - 2025-01-01
 
-### Cambios técnicos
-- `src/etl/extract.py`: carga California Housing via scikit-learn, prepara datos por sección con train/test split
-- `src/etl/transform.py`: cómputo de regresiones (analítica, GD, Newton-Raphson, sklearn) + generación de frames
-- `src/etl/load.py`: genera 3 JSONs (linear, polynomial, logistic) con muestreo estratificado para D3.js
-- `viz/`: página única con scroll vertical, 3 motores JS independientes + utilidades compartidas
-- 19 tests unitarios validando carga, convergencia, estructura JSON y serialización
-- CI con GitHub Actions, deploy automatizado a Jekyll
-- `pyproject.toml`, `Makefile`, `run.py`, ruff, pre-commit
+### Añadido
+- Expansión a 3 tipos de regresión: lineal, polinómica y logística.
+- Dataset California Housing (20,640 filas) reemplazando al dataset Diabetes.
+- Pipeline ETL modular (extract → transform → load).
+- Visualización D3.js con 3 secciones y controles interactivos (scroll vertical).
+- 19 tests unitarios validando carga, convergencia y estructura JSON.
+- CI con GitHub Actions y deploy automatizado a Jekyll.
+- Configuración de `pyproject.toml`, `Makefile`, `run.py`, ruff y pre-commit.
 
-## v0 — Prototipo en Jupyter Notebook (Google Colab)
-- Notebook único comparando 3 métodos de regresión lineal simple (analítica, gradiente descendente, scikit-learn)
-- Dataset Diabetes de scikit-learn (442 filas, BMI → target)
-- Animaciones matplotlib exportadas como GIF
-- Sin tests, sin estructura de proyecto, sin deploy automatizado
+### Cambiado
+- Los paneles de visualización ahora están sincronizados: visualización principal, métrica de convergencia e información adicional.
+
+## [0.1.0] - 2024-01-01
+
+### Añadido
+- Prototipo inicial en Jupyter Notebook (Google Colab).
+- Comparativa de 3 métodos de regresión lineal simple (analítica, gradiente descendente, scikit-learn).
+- Dataset Diabetes de scikit-learn.
+- Animaciones matplotlib exportadas como GIF.

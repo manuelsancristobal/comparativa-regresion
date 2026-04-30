@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "comparativa-regresion"
 version = "1.0.0"
-description = "Interactive D3.js visualization comparing 3 types of regression using California Housing dataset"
+description = "Visualización interactiva en D3.js comparando 3 tipos de regresión usando el dataset de California Housing"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"

@@ -1,5 +1,7 @@
 # Comparativa de Regresión - Visualización Interactiva
 
+[![CI](https://github.com/manuelsancristobal/comparativa-regresion/actions/workflows/ci.yml/badge.svg)](https://github.com/manuelsancristobal/comparativa-regresion/actions/workflows/ci.yml)
+
 ## Contexto
 Este proyecto nació el año 2025, en esa época buscaba proyectos elementales que cualquier científico de datos debería desarrollar sin inconvenientes, alerta de spoiler, hubo muchos inconvenientes, pero con esta animación logré 27 mil impresiones en LinkedIn, cosa que nunca más repetí pero me dio envión para continuar. 
 
