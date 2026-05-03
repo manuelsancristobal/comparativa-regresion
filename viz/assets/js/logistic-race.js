@@ -26,10 +26,18 @@ const LogisticRaceViz = (() => {
   const METHOD_LABELS = { gradient_descent: 'GD', newton_raphson: 'Newton', sklearn: 'SK' };
 
   let els = {};
+  let sortedIndices = [];
 
   const loadData = async () => {
     const response = await fetch('assets/data/logistic_frames.json');
     data = await response.json();
+
+    sortedIndices = data.scatter.x_medinc.map((x, i) => i);
+    sortedIndices.sort((a, b) => {
+      const distA = Math.sqrt(data.scatter.x_medinc[a] ** 2 + data.scatter.x_houseage[a] ** 2);
+      const distB = Math.sqrt(data.scatter.x_medinc[b] ** 2 + data.scatter.x_houseage[b] ** 2);
+      return distA - distB;
+    });
   };
 
   // ─── SETUP ───
@@ -162,11 +170,15 @@ const LogisticRaceViz = (() => {
     const { scatterGroup, xScale, yScale } = els.panelA;
     const nShow = Math.min(nScatter, data.scatter.x_medinc.length);
 
-    const pointsData = data.scatter.x_medinc.slice(0, nShow).map((x, i) => ({
-      x, y: data.scatter.x_houseage[i], label: data.scatter.y[i], idx: i
+    const allPoints = sortedIndices.map((origIdx, sortPos) => ({
+      x: data.scatter.x_medinc[origIdx],
+      y: data.scatter.x_houseage[origIdx],
+      label: data.scatter.y[origIdx],
+      idx: origIdx,
+      active: sortPos < nShow
     }));
 
-    const sel = scatterGroup.selectAll('.scatter-point').data(pointsData, d => d.idx);
+    const sel = scatterGroup.selectAll('.scatter-point').data(allPoints, d => d.idx);
 
     sel.enter()
       .append('circle')
@@ -174,14 +186,12 @@ const LogisticRaceViz = (() => {
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
       .attr('r', 4)
-      .attr('fill', d => CLASS_COLORS[d.label])
-      .attr('opacity', 0.1);
+      .attr('fill', '#ccc')
+      .attr('opacity', 0.3);
 
     scatterGroup.selectAll('.scatter-point')
-      .attr('opacity', d => {
-        const age = (nShow - d.idx) / nShow;
-        return 0.15 + 0.55 * age;
-      });
+      .attr('fill', d => d.active ? CLASS_COLORS[d.label] : '#ccc')
+      .attr('opacity', d => d.active ? 0.7 : 0.3);
   };
 
   const updateBoundaries = (frameData) => {

@@ -24,10 +24,19 @@ const LinearRaceViz = (() => {
   const METHOD_LABELS = { analytical: 'Ana', gradient_descent: 'GD', sklearn: 'SK' };
 
   let els = {};
+  let sortedIndices = []; // scatter points sorted by distance to origin
 
   const loadData = async () => {
     const response = await fetch('assets/data/linear_frames.json');
     data = await response.json();
+
+    // Sort scatter points by euclidean distance to origin (0,0)
+    sortedIndices = data.scatter.x.map((x, i) => i);
+    sortedIndices.sort((a, b) => {
+      const distA = Math.sqrt(data.scatter.x[a] ** 2 + data.scatter.y[a] ** 2);
+      const distB = Math.sqrt(data.scatter.x[b] ** 2 + data.scatter.y[b] ** 2);
+      return distA - distB;
+    });
   };
 
   // ─── SETUP ───
@@ -171,11 +180,15 @@ const LinearRaceViz = (() => {
     const { scatterGroup, xScale, yScale } = els.panelA;
     const nShow = Math.min(nScatter, data.scatter.x.length);
 
-    const pointsData = data.scatter.x.slice(0, nShow).map((x, i) => ({
-      x, y: data.scatter.y[i], idx: i
+    // All points exist from the start (grey), only first nShow (by distance) are "active" (blue)
+    const allPoints = sortedIndices.map((origIdx, sortPos) => ({
+      x: data.scatter.x[origIdx],
+      y: data.scatter.y[origIdx],
+      idx: origIdx,
+      active: sortPos < nShow
     }));
 
-    const sel = scatterGroup.selectAll('.scatter-point').data(pointsData, d => d.idx);
+    const sel = scatterGroup.selectAll('.scatter-point').data(allPoints, d => d.idx);
 
     sel.enter()
       .append('circle')
@@ -183,15 +196,13 @@ const LinearRaceViz = (() => {
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
       .attr('r', 3)
-      .attr('fill', '#888')
-      .attr('opacity', 0.1);
+      .attr('fill', '#ccc')
+      .attr('opacity', 0.3);
 
-    // Darken existing points
+    // Update colors: grey for inactive, light blue for active
     scatterGroup.selectAll('.scatter-point')
-      .attr('opacity', d => {
-        const age = (nShow - d.idx) / nShow;
-        return 0.1 + 0.5 * age;
-      });
+      .attr('fill', d => d.active ? '#74a9cf' : '#ccc')
+      .attr('opacity', d => d.active ? 0.7 : 0.3);
   };
 
   const updateLines = (frameData) => {

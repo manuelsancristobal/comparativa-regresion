@@ -19,10 +19,18 @@ const PolynomialRaceViz = (() => {
   const COLORS = { 1: '#1f77b4', 2: '#ff7f0e', 3: '#2ca02c', 4: '#d62728' };
 
   let els = {};
+  let sortedIndices = [];
 
   const loadData = async () => {
     const response = await fetch('assets/data/polynomial_frames.json');
     data = await response.json();
+
+    sortedIndices = data.scatter.x.map((x, i) => i);
+    sortedIndices.sort((a, b) => {
+      const distA = Math.sqrt(data.scatter.x[a] ** 2 + data.scatter.y[a] ** 2);
+      const distB = Math.sqrt(data.scatter.x[b] ** 2 + data.scatter.y[b] ** 2);
+      return distA - distB;
+    });
   };
 
   // ─── SETUP ───
@@ -135,11 +143,14 @@ const PolynomialRaceViz = (() => {
     const { scatterGroup, xScale, yScale } = els.panelA;
     const nShow = Math.min(nScatter, data.scatter.x.length);
 
-    const pointsData = data.scatter.x.slice(0, nShow).map((x, i) => ({
-      x, y: data.scatter.y[i], idx: i
+    const allPoints = sortedIndices.map((origIdx, sortPos) => ({
+      x: data.scatter.x[origIdx],
+      y: data.scatter.y[origIdx],
+      idx: origIdx,
+      active: sortPos < nShow
     }));
 
-    const sel = scatterGroup.selectAll('.scatter-point').data(pointsData, d => d.idx);
+    const sel = scatterGroup.selectAll('.scatter-point').data(allPoints, d => d.idx);
 
     sel.enter()
       .append('circle')
@@ -147,11 +158,12 @@ const PolynomialRaceViz = (() => {
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
       .attr('r', 3)
-      .attr('fill', '#888')
-      .attr('opacity', 0.1);
+      .attr('fill', '#ccc')
+      .attr('opacity', 0.3);
 
     scatterGroup.selectAll('.scatter-point')
-      .attr('opacity', d => 0.1 + 0.5 * ((nShow - d.idx) / nShow));
+      .attr('fill', d => d.active ? '#74a9cf' : '#ccc')
+      .attr('opacity', d => d.active ? 0.7 : 0.3);
   };
 
   const updateCurves = (frameData) => {

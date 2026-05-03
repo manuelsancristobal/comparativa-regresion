@@ -12,13 +12,11 @@ tech_stack:
   - Pandas
 ---
 
-## Introducción
+## Conclusión Central: Un Solo Problema, Diferentes Espacios
 
-¿Qué diferencia hay entre regresión lineal, polinómica y logística? No es lo que probablemente crees.
+**Los métodos de regresión lineal y polinómica resuelven el mismo problema de mínimos cuadrados ordinarios (OLS) en distintos espacios de características.** Aunque la regresión logística cambia la función de costo hacia la estimación de máxima verosimilitud (MLE), los motores de optimización como el gradiente descendente o Newton-Raphson operan bajo principios idénticos.
 
-Este proyecto es una **visualización interactiva** que demuestra que lineal y polinómica resuelven el **mismo problema OLS en distintos espacios**. Logística cambia la función de costo (MLE en vez de suma de cuadrados), pero los métodos de optimización (gradiente descendente, Newton-Raphson) son fundamentalmente los mismos.
-
-Usa el dataset **California Housing** (~20,640 viviendas) para mostrar cómo 3 técnicas distintas convergen a la misma solución, o por qué Newton-Raphson necesita 5-10 iteraciones mientras el gradiente necesita miles.
+Este proyecto utiliza el dataset **California Housing** (~20,640 viviendas) para demostrar que las 3 técnicas convergen al mismo punto óptimo. Como se observa en las comparativas de tiempo, el método de Newton-Raphson requiere de 5 a 10 iteraciones, mientras que el gradiente requiere miles para alcanzar la misma precisión.
 
 ---
 
@@ -34,41 +32,27 @@ Usa el dataset **California Housing** (~20,640 viviendas) para mostrar cómo 3 t
   </iframe>
 </div>
 
-### La Historia
+### El Insight de la Convergencia
 
-Al observar la animación, lo primero que salta a la vista es que la **línea roja (gradiente) se mueve erráticamente al inicio** pero termina exactamente donde la **línea azul (analítica) ya estaba desde el frame 1**.
+**La solución analítica es al instante, mientras que el gradiente busca el camino.** Como se aprecia en la animación principal, la **línea azul (analítica)** se posiciona desde el inicio, marcando el objetivo final que la **línea roja (gradiente)** alcanzará tras múltiples pasos.
 
-Esto no es coincidencia.
+### La Solución Analítica (Panel A)
 
-### Por qué la solución analítica es instantánea
-
-La ecuación normal resuelve el problema **en un solo paso de álgebra lineal**:
+La ecuación normal resuelve el problema de forma directa mediante álgebra lineal:
 
 ```
 β = (X^T X)^-1 X^T y
 ```
 
-No hay iteraciones. No hay cálculos iterativos. Solo una inversión de matriz y multiplicación. Eso es lo que ves: el punto azul aparece desde el principio porque el problema ya está resuelto.
+No existen iteraciones en este cálculo. Se trata de una inversión de matriz que posiciona el punto azul de forma inmediata en el gráfico.
 
-### La trayectoria en el espacio de parámetros
+### Trayectoria de Parámetros (Panel C)
 
-El Panel C muestra algo hipnótico: la línea roja trazando un camino "cuesta abajo" en el espacio de (intercept, slope). Cada punto es una "apuesta" de parámetros, y el gradiente recorre un camino optimizado por la geometría del error cuadrático.
+Como se vio en el espacio de parámetros del **Panel C**, la línea roja traza un descenso continuo hacia el valle de error mínimo. Cada punto representa una combinación de intercepto y pendiente, donde el gradiente se desplaza de forma optimizada por la geometría del error cuadrático.
 
-### Por qué los 3 métodos colapsan en uno
+### Convergencia Única
 
-La diferencia entre MSE train y MSE test es pequeña pero importante: el modelo **generaliza**. Los 3 métodos convergen exactamente al mismo punto porque **OLS tiene solucion única**. No hay múltiples minimos. Hay un único punto óptimo, y todos los caminos llevan a él.
-
-### Supuestos y limitaciones
-
-Para que estos resultados sean confiables, OLS asume:
-1. **Relación lineal** entre MedInc y MedHouseVal
-2. **Errores con media cero**
-3. **Homocedasticidad** (varianza constante de residuos)
-4. **No autocorrelación** entre errores
-
-Pero si graficas los residuos, notas algo: **la varianza crece con MedInc alto**. Eso es **heterocedasticidad**. Además, MedHouseVal está **capped en 5.0**, lo que aplana la relación en el extremo superior.
-
-El modelo funciona, pero estas violaciones explican por qué R² no pasa de 0.47. No es debilidad del método, es la realidad de los datos.
+Los tres métodos colapsan en uno porque **OLS posee una solución única**. No existen mínimos locales; hay un único punto óptimo al que todos los caminos conducen de forma inevitable.
 
 ---
 
@@ -84,43 +68,17 @@ El modelo funciona, pero estas violaciones explican por qué R² no pasa de 0.47
   </iframe>
 </div>
 
-### La Revelación
+### Transformación de Espacio, No de Paradigma
 
-Lo que revela esta animación es que **regresión polinómica no es un modelo nuevo**.
+**La regresión polinómica es OLS aplicado a una matriz transformada.** La matriz de Vandermonde convierte el valor x en un vector [1, x, x², x³], permitiendo que el mismo motor de la sección anterior resuelva problemas no lineales en apariencia.
 
-La matriz de Vandermonde transforma x en [1, x, x², x³], y a partir de ahí es el **mismo OLS de la sección anterior**. Solo que en un espacio de features diferente.
+### Overfitting y Estabilidad (Panel B)
 
-### Vandermonde = Transformación, no Magia
+Como se observa en el **Panel B**, al utilizar pocos puntos el modelo de **grado 4 oscila de forma errática**. Este es un ejemplo de sobreajuste en tiempo real que se estabiliza de forma progresiva al incrementar el volumen de datos.
 
-```
-[1, x, x²]  →  (ecuación normal OLS)  →  coeficientes
-```
+### El Costo de la Complejidad (Panel C)
 
-Compara la línea Vandermonde manual (rojo) con sklearn Pipeline (verde punteado). **Son exactamente iguales**. Porque sklearn PolynomialFeatures + LinearRegression hace exactamente eso: construye la matriz y resuelve OLS.
-
-### Overfitting en Tiempo Real
-
-Aquí es donde se pone interesante. En el Panel B, al agregar pocos puntos, **grado 4 oscila salvajemente**. Es overfitting en vivo. Pero a medida que agregas puntos, la curva se estabiliza.
-
-El Panel C muestra por qué: **los coeficientes de grado 4 crecen desproporcionadamente**. Son números enormes, lo que causa esas oscilaciones. Es exactamente lo que **Ridge/Lasso penalizan**: esos coeficientes grandes.
-
-### La Conexión
-
-Si fijas grado=1 en esta sección, obtienes exactamente la regresión lineal de arriba. Mismo problema, mismo OLS, diferente espacio de features.
-
-Ese es el insight real: **no hay múltiples paradigmas aquí, solo transformaciones de espacio**.
-
-### Supuestos y el Bias-Variance Tradeoff
-
-Regresión polinómica hereda los mismos supuestos de OLS (es OLS en espacio transformado), pero agrega un riesgo nuevo: **a mayor grado, mayor varianza del modelo**.
-
-Grado 2 tiene alto sesgo (curva rígida, no captura los picos en latitudes ~34° y ~37° que corresponden a ciudades importantes).
-
-Grado 4 tiene alta varianza (oscila con pocos datos).
-
-Grado 3 equilibra ambos.
-
-**Eso es exactamente lo que Ridge resuelve**: en vez de elegir un grado arbitrariamente, penaliza coeficientes grandes. Permite que el modelo encuentre el equilibrio por sí solo.
+El **Panel C** revela la causa de la inestabilidad: **los coeficientes de grado 4 crecen en exceso**. Estos valores elevados provocan las oscilaciones visualizadas, un problema que métodos como Ridge o Lasso corrigen al penalizar la magnitud de estos parámetros.
 
 ---
 
@@ -136,51 +94,17 @@ Grado 3 equilibra ambos.
   </iframe>
 </div>
 
-### El Cambio de Paradigma
+### De Números a Probabilidades
 
-Lo interesante aquí es que **ya no estamos prediciendo un número, sino una probabilidad**.
+**El objetivo cambia hacia la predicción de una probabilidad binaria entre 0 y 1.** La función sigmoide comprime los valores reales, situando la frontera de decisión en el punto donde la probabilidad cruza el umbral de 0.5.
 
-La función sigmoid comprime cualquier valor real al rango [0,1]:
+### Optimización: Log-Loss vs Newton-Raphson
 
-```
-P(y=1) = 1 / (1 + exp(-z))
-```
+Como se vio en la comparativa del **Panel B**, el uso de Log-loss evita que los gradientes se aplanen en los extremos, manteniendo una fuerza de mejora constante. Por otro lado, la eficiencia de **Newton-Raphson** destaca al converger en menos de 10 iteraciones gracias al uso de la Hessiana.
 
-La frontera de decisión es donde esa probabilidad cruza 0.5.
+### Eficiencia Topográfica
 
-### Por qué Log-Loss, no MSE
-
-Aquí es donde muchas explicaciones online fallan. Podrías usar MSE para logística, pero verías algo extraño: **los gradientes se aplanan en los extremos**. Cuando el modelo es muy seguro de su predicción (z muy alto o muy bajo), el gradiente de sigmoid + MSE se vuelve pequeñísimo. Es como empujar un objeto cuesta arriba en una pendiente cada vez más plana.
-
-Log-loss (cross-entropy) evita esto:
-
-```
-Log-loss = -y * log(ŷ) - (1-y) * log(1-ŷ)
-```
-
-Los gradientes **nunca se aplanan**. Siempre hay fuerza para mejorar, aunque el modelo sea muy seguro. Ves esto en el Panel B: GD avanza constantemente, sin "estancarse".
-
-### Newton-Raphson vs Gradiente Descendente
-
-Aquí ocurre algo mágico. Newton-Raphson converge en ~5-10 iteraciones. Gradiente necesita miles.
-
-¿Por qué?
-
-**Newton-Raphson usa la Hessiana** — la matriz de segundas derivadas. Es como la diferencia entre:
-- Caminar cuesta abajo a ciegas, esperando no tropezar (GD)
-- Tener un mapa topográfico que te muestra exactamente dónde está el valle (Newton)
-
-La Hessiana te dice **cómo es la curvatura del terreno**, no solo si vas en la dirección correcta. Por eso "salta" al óptimo en casi nada.
-
-Pero tiene un costo: invertir una matriz de n×n es O(n³), mientras que un paso de gradiente es O(n). Para problemas pequeños (como aquí, 3 features), Newton es increíblemente rápido. Para millones de features, es impracticable.
-
-### Multicolinealidad
-
-Aquí usamos MedInc, HouseAge y AveRooms. Pero hay un problema: ingresos altos **correlacionan con casas más grandes**. No es causalidad, es confusión estadística.
-
-Esto no afecta la **predicción** (el modelo sigue funcionando), pero sí la **interpretación de coeficientes individuales**. No puedes decir "MedInc aporta X" si está confundido con AveRooms.
-
-Sklearn agrega regularización L2 por defecto (C=1.0), por eso sus coeficientes pueden diferir levemente de las implementaciones manuales.
+Newton-Raphson emplea la curvatura del terreno para "saltar" al óptimo. Mientras el gradiente desciende de forma ciega, la Hessiana actúa como un mapa topográfico. En este entorno de 3 características, Newton resulta con una rapidez increíble, aunque su costo computacional crece de forma cúbica con el número de variables.
 
 ---
 
@@ -191,36 +115,32 @@ Sklearn agrega regularización L2 por defecto (C=1.0), por eso sus coeficientes 
 | **Tipo de Problema** | Predicción continua | Predicción continua (no lineal) | Clasificación binaria |
 | **Función de Costo** | MSE | MSE | Log-loss (cross-entropy) |
 | **R² / Accuracy** | 0.47 | ~0.55-0.65 | ~80% |
-| **Convergencia** | Instantánea (analítica) | Instantánea | Iterativa (GD ms, Newton ns) |
-| **Supuestos Clave** | Linealidad, homocedasticidad | Linealidad (en espacio transformado) | Independencia, log-odds lineales |
+| **Convergencia** | Al instante (analítica) | Al instante | Iterativa (GD ms, Newton ns) |
+| **Supuestos Clave** | Linealidad, homocedasticidad | Linealidad (espacio transformado) | Independencia, log-odds lineales |
 
 ---
 
-## Conclusión
+## Síntesis Técnica
 
-Lineal y polinómica son el **mismo OLS en distintos espacios**. Logística cambia la función de costo pero los métodos de optimización son los mismos.
+Entender la optimización es la base del aprendizaje automático. No es necesario memorizar algoritmos aislados, sino comprender:
+1. **Definición del error** (función de costo)
+2. **Búsqueda del mínimo** (gradiente, Newton, ecuación normal)
+3. **Control de complejidad** (regularización)
 
-Lo que este proyecto realmente enseña es que **entender optimización es la base de todo**.
-
-No necesitas memorizar 50 algoritmos distintos. Necesitas entender:
-1. **Cómo defines el error** (función de costo)
-2. **Cómo encuentras el mínimo** (gradiente descendente, Newton, ecuación normal)
-3. **Cómo evitas sobreaustarte** (regularización)
-
-Todo lo demás son variaciones sobre el mismo tema.
+Todo lo demás constituye variaciones sobre estos pilares fundamentales.
 
 ### Recursos
 
-- **Notebook original**: Contiene el código que generó este proyecto
-- **Dataset**: California Housing (scikit-learn) — 20,640 viviendas de California, censo 1990
-- **Visualización**: D3.js v7 con animaciones sincronizadas
+- **Notebook original**: Código fuente del análisis.
+- **Dataset**: California Housing (scikit-learn) — censo 1990.
+- **Visualización**: D3.js v7 con animaciones sincronizadas.
 
 ---
 
-**Explora la visualización interactiva arriba. Juega con los controles. Observa, no leas — eso es aprender.**
+**Utiliza los controles de la visualización superior para observar la convergencia de forma directa.**
 
 
 <div class="methodology-box" style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px; border-left: 4px solid var(--secondary);">
-    <p style="margin: 0; font-size: 0.95rem;">📌 <strong>Sobre este proyecto:</strong> Esta es la segunda versión del análisis, rediseñada como aplicación interactiva. El proyecto original, desarrollado como notebook exploratorio, está disponible en
+    <p style="margin: 0; font-size: 0.95rem;">📌 <strong>Sobre este proyecto:</strong> Esta es la segunda versión del análisis, rediseñada como aplicación interactiva. El proyecto original está disponible en
     <a href="https://colab.research.google.com/drive/1wrEKoYuQHJkn9a3lEFVlo8ElW89SFcTg?usp=sharing" target="_blank" style="color: var(--secondary); font-weight: 600;">Google Colab</a>.</p>
 </div>
