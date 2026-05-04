@@ -1,52 +1,48 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Project-specific
+data/processed/*.json
+viz/assets/data/*.json
+.pre-commit-framework/
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Testing
+# Caché & Testing
 .pytest_cache/
 .coverage
 htmlcov/
 .ruff_cache/
 
-# Pre-commit
-.pre-commit-framework/
+### --- PROFESSIONAL STANDARDS ---
 
-# Project-specific
-data/processed/*.json
-viz/assets/data/*.json
+# Environments & Secrets
+.env
+.venv/
+env/
+venv/
+ENV/
+*.env
+auth.json
 
-# Claude Code
+# AI Assistants
 .claude/
+.gemini/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Project Specifics
+data/processed/
+data/work/
+output/
+dist/
+build/
+.Python
+*.egg
+*.egg-info/
+__pycache__/
+*.py[cod]

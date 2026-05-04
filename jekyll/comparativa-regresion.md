@@ -32,6 +32,8 @@ Este proyecto utiliza el dataset **California Housing** (~20,640 viviendas) para
   </iframe>
 </div>
 
+[Ver en pantalla completa](/proyectos/comparativa-regresion/linear.html){: .btn .btn--primary }
+
 ### El Insight de la Convergencia
 
 **La solución analítica es al instante, mientras que el gradiente busca el camino.** Como se aprecia en la animación principal, la **línea azul (analítica)** se posiciona desde el inicio, marcando el objetivo final que la **línea roja (gradiente)** alcanzará tras múltiples pasos.
@@ -68,6 +70,8 @@ Los tres métodos colapsan en uno porque **OLS posee una solución única**. No 
   </iframe>
 </div>
 
+[Ver en pantalla completa](/proyectos/comparativa-regresion/polynomial.html){: .btn .btn--primary }
+
 ### Transformación de Espacio, No de Paradigma
 
 **La regresión polinómica es OLS aplicado a una matriz transformada.** La matriz de Vandermonde convierte el valor x en un vector [1, x, x², x³], permitiendo que el mismo motor de la sección anterior resuelva problemas no lineales en apariencia.
@@ -93,6 +97,8 @@ El **Panel C** revela la causa de la inestabilidad: **los coeficientes de grado 
     allowfullscreen>
   </iframe>
 </div>
+
+[Ver en pantalla completa](/proyectos/comparativa-regresion/logistic.html){: .btn .btn--primary }
 
 ### De Números a Probabilidades
 
