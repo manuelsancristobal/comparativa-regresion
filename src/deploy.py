@@ -21,8 +21,8 @@ def deploy_to_jekyll():
         print("ERROR: Variable de entorno 'JEKYLL_REPO' no definida.")
         return
     if not JEKYLL_REPO.exists():
-        print(f"⚠ Jekyll repo not found at {JEKYLL_REPO}")
-        print("Skipping deployment. Configure JEKYLL_REPO in config.py")
+        print(f"⚠ Repo Jekyll no encontrado en {JEKYLL_REPO}")
+        print("Saltando deploy. Configura JEKYLL_REPO en config.py")
         return
 
     # Create Jekyll directories if they don't exist
@@ -32,21 +32,21 @@ def deploy_to_jekyll():
     JEKYLL_PAGE.mkdir(parents=True, exist_ok=True)
 
     # Copy data files
-    print(f"Copying data to {JEKYLL_DATA}...")
+    print(f"Copiando datos a {JEKYLL_DATA}...")
     for json_file in DATA_PROCESSED.glob("*.json"):
         dest = JEKYLL_DATA / json_file.name
         shutil.copy2(json_file, dest)
         print(f"  {json_file.name}")
 
     # Copy CSS
-    print(f"Copying CSS to {JEKYLL_CSS}...")
+    print(f"Copiando CSS a {JEKYLL_CSS}...")
     css_file = VIZ_DIR / "assets" / "css" / "regression.css"
     if css_file.exists():
         shutil.copy2(css_file, JEKYLL_CSS / "regression.css")
         print("  regression.css")
 
     # Copy JavaScript files
-    print(f"Copying JavaScript to {JEKYLL_JS}...")
+    print(f"Copiando JavaScript a {JEKYLL_JS}...")
     js_dir = VIZ_DIR / "assets" / "js"
     if js_dir.exists():
         for js_file in js_dir.glob("*.js"):
@@ -54,19 +54,19 @@ def deploy_to_jekyll():
             print(f"  {js_file.name}")
 
     # Copy HTML visualizations
-    print(f"Copying HTML files to {JEKYLL_BASE}...")
+    print(f"Copiando archivos HTML a {JEKYLL_BASE}...")
     for html_file in VIZ_DIR.glob("*.html"):
         shutil.copy2(html_file, JEKYLL_BASE / html_file.name)
         print(f"  {html_file.name}")
 
     # Copy Jekyll page
-    print(f"Copying Jekyll project page to {JEKYLL_PAGE}...")
+    print(f"Copiando página de proyecto Jekyll a {JEKYLL_PAGE}...")
     jekyll_md = Path(__file__).parent.parent / "jekyll" / "comparativa-regresion.md"
     if jekyll_md.exists():
         shutil.copy2(jekyll_md, JEKYLL_PAGE / "comparativa-regresion.md")
         print("  comparativa-regresion.md")
 
-    print("✓ Deployment complete!")
+    print("✓ Deploy completado!")
 
 
 if __name__ == "__main__":

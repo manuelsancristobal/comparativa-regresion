@@ -7,13 +7,13 @@ from src.etl.transform import transform
 
 def etl_pipeline():
     """Run the complete ETL pipeline."""
-    print("Step 1: Extracting data...")
+    print("Paso 1: Extrayendo datos...")
     extracted_data = extract()
 
-    print("Step 2: Transforming data...")
+    print("Paso 2: Transformando datos...")
     transformed_data = transform(extracted_data)
 
-    print("Step 3: Loading data...")
+    print("Paso 3: Cargando datos...")
     loaded_data = load(transformed_data)
 
     return loaded_data
@@ -21,6 +21,6 @@ def etl_pipeline():
 
 if __name__ == "__main__":
     result = etl_pipeline()
-    print("ETL Pipeline Complete!")
+    print("Pipeline ETL completado!")
     for key, path in result.items():
         print(f"  {key}: {path}")
