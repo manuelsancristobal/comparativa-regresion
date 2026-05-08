@@ -155,28 +155,24 @@ input[type="checkbox"] {
 /* Panels Layout */
 .panels {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
 }
 
-@media (max-width: 1400px) {
-  .panels {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .panels > :first-child {
-    grid-column: span 2;
-  }
+.panels > :first-child {
+  grid-row: span 2;
 }
 
 @media (max-width: 900px) {
   .panels {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
   }
 
   .panels > :first-child {
-    grid-column: span 1;
+    grid-row: span 1;
   }
 }
 
