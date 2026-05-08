@@ -1,6 +1,7 @@
 /**
  * Polynomial Regression Visualization - Growing Data
- * Scatter points appear progressively and darken over time.
+ * Scatter points appear progressively with entrance animation.
+ * Responsive SVGs with viewBox. Throttled animation loop.
  */
 
 const PolynomialRaceViz = (() => {
@@ -9,17 +10,20 @@ const PolynomialRaceViz = (() => {
     currentFrame: 0,
     isPlaying: false,
     speed: 1,
-    animationId: null,
+    transitionMs: 0,
     visibleDegrees: { 1: true, 2: true, 3: true, 4: true }
   };
 
   const SVG_WIDTH = 700;
   const SVG_HEIGHT = 500;
+  const SMALL_W = 340;
+  const SMALL_H = 300;
   const DEGREES = [1, 2, 3, 4];
   const COLORS = { 1: '#1f77b4', 2: '#ff7f0e', 3: '#2ca02c', 4: '#d62728' };
 
   let els = {};
   let sortedIndices = [];
+  let animLoop = null;
 
   const loadData = async () => {
     const response = await fetch('assets/data/polynomial_frames.json');
@@ -50,7 +54,9 @@ const PolynomialRaceViz = (() => {
 
     const container = d3.select('#panel-a-poly').html('');
     container.append('h3').text('MedInc vs MedHouseVal + Curvas Polinómicas');
-    const svg = container.append('svg').attr('width', SVG_WIDTH).attr('height', SVG_HEIGHT);
+    const svg = container.append('svg')
+      .attr('viewBox', `0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const xScale = d3.scaleLinear().domain(d3.extent(data.scatter.x)).range([0, w]);
@@ -82,12 +88,14 @@ const PolynomialRaceViz = (() => {
 
   const setupPanelB = () => {
     const m = { top: 20, right: 20, bottom: 40, left: 60 };
-    const w = SVG_WIDTH / 2 - 10 - m.left - m.right;
-    const h = 300 - m.top - m.bottom;
+    const w = SMALL_W - m.left - m.right;
+    const h = SMALL_H - m.top - m.bottom;
 
     const container = d3.select('#panel-b-poly').html('');
     container.append('h3').text('MSE Train vs Test por Grado');
-    const svg = container.append('svg').attr('width', SVG_WIDTH / 2 - 10).attr('height', 300);
+    const svg = container.append('svg')
+      .attr('viewBox', `0 0 ${SMALL_W} ${SMALL_H}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const xScale = d3.scaleBand().domain(DEGREES.map(d => `Deg ${d}`)).range([0, w]).padding(0.2);
@@ -100,9 +108,11 @@ const PolynomialRaceViz = (() => {
       const label = `Deg ${deg}`;
       const bw = xScale.bandwidth() / 2;
       trainBars[deg] = g.append('rect').attr('x', xScale(label)).attr('width', bw)
-        .attr('fill', COLORS[deg]).attr('opacity', 0.7);
+        .attr('fill', COLORS[deg]).attr('opacity', 0.7)
+        .attr('y', h).attr('height', 0);
       testBars[deg] = g.append('rect').attr('x', xScale(label) + bw).attr('width', bw)
-        .attr('fill', COLORS[deg]).attr('opacity', 0.35);
+        .attr('fill', COLORS[deg]).attr('opacity', 0.35)
+        .attr('y', h).attr('height', 0);
     });
 
     els.panelB = { yAxisG, trainBars, testBars, w, h };
@@ -110,12 +120,14 @@ const PolynomialRaceViz = (() => {
 
   const setupPanelC = () => {
     const m = { top: 20, right: 20, bottom: 40, left: 60 };
-    const w = SVG_WIDTH / 2 - 10 - m.left - m.right;
-    const h = 300 - m.top - m.bottom;
+    const w = SMALL_W - m.left - m.right;
+    const h = SMALL_H - m.top - m.bottom;
 
     const container = d3.select('#panel-c-poly').html('');
     container.append('h3').text('Evolución de Coeficientes');
-    const svg = container.append('svg').attr('width', SVG_WIDTH / 2 - 10).attr('height', 300);
+    const svg = container.append('svg')
+      .attr('viewBox', `0 0 ${SMALL_W} ${SMALL_H}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const yAxisG = g.append('g');
@@ -125,6 +137,15 @@ const PolynomialRaceViz = (() => {
   };
 
   // ─── UPDATE ───
+
+  const t = () => state.transitionMs > 0
+    ? d3.transition().duration(state.transitionMs)
+    : null;
+
+  const applyTransition = (sel) => {
+    const tr = t();
+    return tr ? sel.transition(tr) : sel;
+  };
 
   const update = (frame) => {
     const frameIdx = Math.min(frame, data.frames.length - 1);
@@ -157,11 +178,14 @@ const PolynomialRaceViz = (() => {
       .attr('class', 'scatter-point')
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
-      .attr('r', 3)
+      .attr('r', 0)
       .attr('fill', '#ccc')
+      .attr('opacity', 0)
+      .transition().duration(300)
+      .attr('r', 3)
       .attr('opacity', 0.3);
 
-    scatterGroup.selectAll('.scatter-point')
+    applyTransition(scatterGroup.selectAll('.scatter-point'))
       .attr('fill', d => d.active ? '#74a9cf' : '#ccc')
       .attr('opacity', d => d.active ? 0.7 : 0.3);
   };
@@ -182,7 +206,8 @@ const PolynomialRaceViz = (() => {
         return { x, y };
       });
 
-      curvePaths[deg].attr('d', d3.line().x(d => xScale(d.x)).y(d => yScale(d.y))(pts));
+      const pathD = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y))(pts);
+      applyTransition(curvePaths[deg]).attr('d', pathD);
     });
   };
 
@@ -207,8 +232,8 @@ const PolynomialRaceViz = (() => {
       if (!show) return;
       const tY = yScale(frameData[key].mse_train);
       const eY = yScale(frameData[key].mse_test);
-      trainBars[deg].attr('y', tY).attr('height', h - tY);
-      testBars[deg].attr('y', eY).attr('height', h - eY);
+      applyTransition(trainBars[deg]).attr('y', tY).attr('height', h - tY);
+      applyTransition(testBars[deg]).attr('y', eY).attr('height', h - eY);
     });
   };
 
@@ -232,36 +257,41 @@ const PolynomialRaceViz = (() => {
     barsGroup.selectAll('.coeff-bar').data(coeffData).enter()
       .append('rect')
       .attr('x', (_, i) => xScale(i))
-      .attr('y', d => yScale(d.value))
       .attr('width', xScale.bandwidth())
-      .attr('height', d => h - yScale(d.value))
       .attr('fill', d => COLORS[d.degree])
-      .attr('opacity', 0.7);
+      .attr('opacity', 0.7)
+      .attr('y', h)
+      .attr('height', 0)
+      .transition().duration(state.transitionMs || 200)
+      .attr('y', d => yScale(d.value))
+      .attr('height', d => h - yScale(d.value));
   };
 
-  // ─── ANIMATION ───
-
-  const animate = () => {
-    if (!state.isPlaying) return;
-    state.currentFrame = Math.min(state.currentFrame + state.speed, data.frames.length - 1);
-    update(state.currentFrame);
-    if (state.currentFrame >= data.frames.length - 1) {
-      state.isPlaying = false;
-      controls.playButton.classed('active', false).text('Play');
-      return;
-    }
-    state.animationId = requestAnimationFrame(animate);
-  };
+  // ─── ANIMATION (throttled) ───
 
   const startAnimation = () => {
     if (state.currentFrame >= data.frames.length - 1) state.currentFrame = 0;
     state.isPlaying = true;
-    state.animationId = requestAnimationFrame(animate);
+    state.transitionMs = CommonUtils.TRANSITION_MS;
+
+    animLoop = CommonUtils.createAnimationLoop(() => {
+      state.currentFrame = Math.min(state.currentFrame + state.speed, data.frames.length - 1);
+      update(state.currentFrame);
+      if (state.currentFrame >= data.frames.length - 1) {
+        state.isPlaying = false;
+        state.transitionMs = 0;
+        controls.playButton.classed('active', false).text('Play');
+        return false;
+      }
+      return true;
+    });
+    animLoop.start();
   };
 
   const stopAnimation = () => {
     state.isPlaying = false;
-    if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
+    state.transitionMs = 0;
+    if (animLoop) { animLoop.stop(); animLoop = null; }
   };
 
   const controls = CommonUtils.createPlaybackControls('#controls-poly', {

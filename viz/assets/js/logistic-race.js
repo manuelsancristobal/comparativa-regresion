@@ -1,6 +1,7 @@
 /**
  * Logistic Regression Visualization - Growing Data
- * Scatter points appear progressively with clearer class colors.
+ * Scatter points appear progressively with entrance animation.
+ * Responsive SVGs with viewBox. Throttled animation loop.
  */
 
 const LogisticRaceViz = (() => {
@@ -9,24 +10,26 @@ const LogisticRaceViz = (() => {
     currentFrame: 0,
     isPlaying: false,
     speed: 1,
-    animationId: null,
+    transitionMs: 0,
     visibleMethods: { gradient_descent: true, newton_raphson: true, sklearn: true }
   };
 
   const SVG_WIDTH = 700;
   const SVG_HEIGHT = 500;
+  const SMALL_W = 340;
+  const SMALL_H = 300;
   const COLORS = {
     gradient_descent: '#d62728',
     newton_raphson: '#1f77b4',
     sklearn: '#2ca02c'
   };
-  // Brighter, more distinguishable class colors
   const CLASS_COLORS = { 1: '#4a90d9', 0: '#e8943a' };
   const METHODS = ['gradient_descent', 'newton_raphson', 'sklearn'];
   const METHOD_LABELS = { gradient_descent: 'GD', newton_raphson: 'Newton', sklearn: 'SK' };
 
   let els = {};
   let sortedIndices = [];
+  let animLoop = null;
 
   const loadData = async () => {
     const response = await fetch('assets/data/logistic_frames.json');
@@ -57,7 +60,9 @@ const LogisticRaceViz = (() => {
 
     const container = d3.select('#panel-a-logistic').html('');
     container.append('h3').text('MedInc vs HouseAge + Frontera de Decisión');
-    const svg = container.append('svg').attr('width', SVG_WIDTH).attr('height', SVG_HEIGHT);
+    const svg = container.append('svg')
+      .attr('viewBox', `0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const xScale = d3.scaleLinear().domain(d3.extent(data.scatter.x_medinc)).range([0, w]);
@@ -88,12 +93,14 @@ const LogisticRaceViz = (() => {
 
   const setupPanelB = () => {
     const m = { top: 20, right: 20, bottom: 40, left: 60 };
-    const w = SVG_WIDTH / 2 - 10 - m.left - m.right;
-    const h = 300 - m.top - m.bottom;
+    const w = SMALL_W - m.left - m.right;
+    const h = SMALL_H - m.top - m.bottom;
 
     const container = d3.select('#panel-b-logistic').html('');
     container.append('h3').text('Carrera de Log-Loss');
-    const svg = container.append('svg').attr('width', SVG_WIDTH / 2 - 10).attr('height', 300);
+    const svg = container.append('svg')
+      .attr('viewBox', `0 0 ${SMALL_W} ${SMALL_H}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const xScale = d3.scaleBand()
@@ -108,7 +115,8 @@ const LogisticRaceViz = (() => {
       const label = METHOD_LABELS[method];
       bars[method] = g.append('rect')
         .attr('x', xScale(label)).attr('width', xScale.bandwidth())
-        .attr('fill', COLORS[method]).attr('opacity', 0.7);
+        .attr('fill', COLORS[method]).attr('opacity', 0.7)
+        .attr('y', h).attr('height', 0);
       barLabels[method] = g.append('text')
         .attr('x', xScale(label) + xScale.bandwidth() / 2)
         .attr('text-anchor', 'middle').attr('font-size', '11px');
@@ -119,12 +127,14 @@ const LogisticRaceViz = (() => {
 
   const setupPanelC = () => {
     const m = { top: 20, right: 20, bottom: 40, left: 60 };
-    const w = SVG_WIDTH / 2 - 10 - m.left - m.right;
-    const h = 300 - m.top - m.bottom;
+    const w = SMALL_W - m.left - m.right;
+    const h = SMALL_H - m.top - m.bottom;
 
     const container = d3.select('#panel-c-logistic').html('');
     container.append('h3').text('Curva ROC (AUC)');
-    const svg = container.append('svg').attr('width', SVG_WIDTH / 2 - 10).attr('height', 300);
+    const svg = container.append('svg')
+      .attr('viewBox', `0 0 ${SMALL_W} ${SMALL_H}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const roc = data.roc_curve;
@@ -153,6 +163,15 @@ const LogisticRaceViz = (() => {
   };
 
   // ─── UPDATE ───
+
+  const t = () => state.transitionMs > 0
+    ? d3.transition().duration(state.transitionMs)
+    : null;
+
+  const applyTransition = (sel) => {
+    const tr = t();
+    return tr ? sel.transition(tr) : sel;
+  };
 
   const update = (frame) => {
     const frameIdx = Math.min(frame, data.frames.length - 1);
@@ -185,11 +204,14 @@ const LogisticRaceViz = (() => {
       .attr('class', 'scatter-point')
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
-      .attr('r', 4)
+      .attr('r', 0)
       .attr('fill', '#ccc')
+      .attr('opacity', 0)
+      .transition().duration(300)
+      .attr('r', 4)
       .attr('opacity', 0.3);
 
-    scatterGroup.selectAll('.scatter-point')
+    applyTransition(scatterGroup.selectAll('.scatter-point'))
       .attr('fill', d => d.active ? CLASS_COLORS[d.label] : '#ccc')
       .attr('opacity', d => d.active ? 0.7 : 0.3);
   };
@@ -217,8 +239,9 @@ const LogisticRaceViz = (() => {
       }
 
       if (pts.length > 1) {
-        boundaryPaths[method]
-          .attr('d', d3.line().x(d => xScale(d.x)).y(d => yScale(d.y))(pts))
+        const pathD = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y))(pts);
+        applyTransition(boundaryPaths[method])
+          .attr('d', pathD)
           .attr('visibility', 'visible');
       } else {
         boundaryPaths[method].attr('visibility', 'hidden');
@@ -248,34 +271,36 @@ const LogisticRaceViz = (() => {
       if (!show) return;
       const loss = frameData[method].log_loss_train || 0;
       const bY = yScale(loss);
-      bars[method].attr('y', bY).attr('height', h - bY);
-      barLabels[method].attr('y', bY - 5).text(CommonUtils.formatNumber(loss, 3));
+      applyTransition(bars[method]).attr('y', bY).attr('height', h - bY);
+      applyTransition(barLabels[method]).attr('y', bY - 5).text(CommonUtils.formatNumber(loss, 3));
     });
   };
 
-  // ─── ANIMATION ───
-
-  const animate = () => {
-    if (!state.isPlaying) return;
-    state.currentFrame = Math.min(state.currentFrame + state.speed, data.frames.length - 1);
-    update(state.currentFrame);
-    if (state.currentFrame >= data.frames.length - 1) {
-      state.isPlaying = false;
-      controls.playButton.classed('active', false).text('Play');
-      return;
-    }
-    state.animationId = requestAnimationFrame(animate);
-  };
+  // ─── ANIMATION (throttled) ───
 
   const startAnimation = () => {
     if (state.currentFrame >= data.frames.length - 1) state.currentFrame = 0;
     state.isPlaying = true;
-    state.animationId = requestAnimationFrame(animate);
+    state.transitionMs = CommonUtils.TRANSITION_MS;
+
+    animLoop = CommonUtils.createAnimationLoop(() => {
+      state.currentFrame = Math.min(state.currentFrame + state.speed, data.frames.length - 1);
+      update(state.currentFrame);
+      if (state.currentFrame >= data.frames.length - 1) {
+        state.isPlaying = false;
+        state.transitionMs = 0;
+        controls.playButton.classed('active', false).text('Play');
+        return false;
+      }
+      return true;
+    });
+    animLoop.start();
   };
 
   const stopAnimation = () => {
     state.isPlaying = false;
-    if (state.animationId) { cancelAnimationFrame(state.animationId); state.animationId = null; }
+    state.transitionMs = 0;
+    if (animLoop) { animLoop.stop(); animLoop = null; }
   };
 
   const controls = CommonUtils.createPlaybackControls('#controls-logistic', {

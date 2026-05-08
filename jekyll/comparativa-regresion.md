@@ -1,8 +1,8 @@
 ---
 layout: project
-title: Comparativa de Métodos de Regresión
+title: El Viaje de la Regresión
 category: Machine Learning
-description: Visualización interactiva D3.js comparando 3 tipos de regresión (lineal, polinómica, logística) con animaciones de convergencia
+description: Un recorrido visual y narrativo por la regresión lineal, polinómica y logística, descubriendo cómo los datos encuentran su forma.
 github_url: https://github.com/manuelsancristobal/comparativa-regresion
 tech_stack:
   - Python
@@ -12,15 +12,17 @@ tech_stack:
   - Pandas
 ---
 
-## Conclusión Central: Un Solo Problema, Diferentes Espacios
+## Un mismo destino, diferentes caminos
 
-**Los métodos de regresión lineal y polinómica resuelven el mismo problema de mínimos cuadrados ordinarios (OLS) en distintos espacios de características.** Aunque la regresión logística cambia la función de costo hacia la estimación de máxima verosimilitud (MLE), los motores de optimización como el gradiente descendente o Newton-Raphson operan bajo principios idénticos.
+Cuando empecé a explorar los modelos de regresión, me di cuenta de algo fascinante: aunque las fórmulas cambien, casi siempre estamos intentando resolver el mismo rompecabezas. Es como intentar encontrar el camino más corto en un mapa; puedes usar una brújula o un GPS, pero el destino es el mismo.
 
-Este proyecto utiliza el dataset **California Housing** (~20,640 viviendas) para demostrar que las 3 técnicas convergen al mismo punto óptimo. Como se observa en las comparativas de tiempo, el método de Newton-Raphson requiere de 5 a 10 iteraciones, mientras que el gradiente requiere miles para alcanzar la misma precisión.
+En este proyecto, quise ver con mis propios ojos cómo aprenden estos modelos usando el dataset de **viviendas de California**. No se trata solo de números, sino de ver cómo una línea "aprende" a seguir a los datos.
 
 ---
 
-## Sección 1: Regresión Lineal
+## 1. La Línea Recta: ¿Por dónde se empieza?
+
+Lo primero que aprendemos es que una línea recta es la forma más simple de entender una relación. Pero, ¿cómo decide esa línea dónde ponerse?
 
 <div class="viz-container" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
   <iframe
@@ -34,31 +36,17 @@ Este proyecto utiliza el dataset **California Housing** (~20,640 viviendas) para
 
 [Ver en pantalla completa](/proyectos/comparativa-regresion/linear.html){: .btn .btn--primary }
 
-### El Insight de la Convergencia
+### El baile entre la teoría y la práctica
 
-**La solución analítica es al instante, mientras que el gradiente busca el camino.** Como se aprecia en la animación principal, la **línea azul (analítica)** se posiciona desde el inicio, marcando el objetivo final que la **línea roja (gradiente)** alcanzará tras múltiples pasos.
+Si miras el **Panel A**, verás dos líneas. La **azul** es la "sabia": usa una fórmula matemática directa y se coloca en su sitio al instante. La **roja**, en cambio, es la que "aprende" paso a paso (el famoso gradiente descendente). Es increíble ver cómo la línea roja va tanteando, cometiendo errores y ajustándose hasta que, finalmente, termina abrazando a la línea azul.
 
-### La Solución Analítica (Panel A)
-
-La ecuación normal resuelve el problema de forma directa mediante álgebra lineal:
-
-```
-β = (X^T X)^-1 X^T y
-```
-
-No existen iteraciones en este cálculo. Se trata de una inversión de matriz que posiciona el punto azul de forma inmediata en el gráfico.
-
-### Trayectoria de Parámetros (Panel C)
-
-Como se vio en el espacio de parámetros del **Panel C**, la línea roja traza un descenso continuo hacia el valle de error mínimo. Cada punto representa una combinación de intercepto y pendiente, donde el gradiente se desplaza de forma optimizada por la geometría del error cuadrático.
-
-### Convergencia Única
-
-Los tres métodos colapsan en uno porque **OLS posee una solución única**. No existen mínimos locales; hay un único punto óptimo al que todos los caminos conducen de forma inevitable.
+En el **Panel C**, podemos seguir ese rastro. Es como ver las huellas de alguien que baja una montaña buscando el punto más bajo. No importa de dónde parta la línea roja, siempre acaba encontrando el mismo valle de error mínimo.
 
 ---
 
-## Sección 2: Regresión Polinómica
+## 2. Cuando la realidad tiene curvas
+
+A veces, una línea recta se queda corta. La realidad es más compleja y los datos suelen tener curvas que una simple regla no puede seguir. Aquí es donde descubrí el truco de la **regresión polinómica**.
 
 <div class="viz-container" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
   <iframe
@@ -72,21 +60,17 @@ Los tres métodos colapsan en uno porque **OLS posee una solución única**. No 
 
 [Ver en pantalla completa](/proyectos/comparativa-regresion/polynomial.html){: .btn .btn--primary }
 
-### Transformación de Espacio, No de Paradigma
+### El peligro de querer ser perfecto
 
-**La regresión polinómica es OLS aplicado a una matriz transformada.** La matriz de Vandermonde convierte el valor x en un vector [1, x, x², x³], permitiendo que el mismo motor de la sección anterior resuelva problemas no lineales en apariencia.
+Lo más curioso que descubrí aquí está en el **Panel B**. Cuando intentamos que la curva sea demasiado "flexible" (usando un grado alto), el modelo se vuelve un poco loco. Con pocos datos, la curva salta de un lado a otro intentando tocar cada punto, lo que llamamos *overfitting*.
 
-### Overfitting y Estabilidad (Panel B)
-
-Como se observa en el **Panel B**, al utilizar pocos puntos el modelo de **grado 4 oscila de forma errática**. Este es un ejemplo de sobreajuste en tiempo real que se estabiliza de forma progresiva al incrementar el volumen de datos.
-
-### El Costo de la Complejidad (Panel C)
-
-El **Panel C** revela la causa de la inestabilidad: **los coeficientes de grado 4 crecen en exceso**. Estos valores elevados provocan las oscilaciones visualizadas, un problema que métodos como Ridge o Lasso corrigen al penalizar la magnitud de estos parámetros.
+Solo cuando le damos suficientes datos, esa curva nerviosa empieza a calmarse. En el **Panel C**, verás cómo los coeficientes (la "fuerza" de la curva) crecen muchísimo cuando el modelo está confundido, un recordatorio de que, a veces, menos es más.
 
 ---
 
-## Sección 3: Regresión Logística
+## 3. De predecir precios a tomar decisiones
+
+Finalmente, me pregunté: ¿y si no quiero predecir un valor exacto, sino simplemente clasificar algo? ¿Es una casa cara o barata? Aquí la línea recta se transforma en una "S" suave llamada **regresión logística**.
 
 <div class="viz-container" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem;">
   <iframe
@@ -100,52 +84,33 @@ El **Panel C** revela la causa de la inestabilidad: **los coeficientes de grado 
 
 [Ver en pantalla completa](/proyectos/comparativa-regresion/logistic.html){: .btn .btn--primary }
 
-### De Números a Probabilidades
+### La elegancia de la probabilidad
 
-**El objetivo cambia hacia la predicción de una probabilidad binaria entre 0 y 1.** La función sigmoide comprime los valores reales, situando la frontera de decisión en el punto donde la probabilidad cruza el umbral de 0.5.
+Lo que me gusta de esta visualización es cómo la frontera de decisión separa los dos mundos. En el **Panel B**, comparamos dos formas de aprender: una que camina despacio (Gradiente) y otra que parece dar saltos gigantes hacia la solución (Newton-Raphson).
 
-### Optimización: Log-Loss vs Newton-Raphson
-
-Como se vio en la comparativa del **Panel B**, el uso de Log-loss evita que los gradientes se aplanen en los extremos, manteniendo una fuerza de mejora constante. Por otro lado, la eficiencia de **Newton-Raphson** destaca al converger en menos de 10 iteraciones gracias al uso de la Hessiana.
-
-### Eficiencia Topográfica
-
-Newton-Raphson emplea la curvatura del terreno para "saltar" al óptimo. Mientras el gradiente desciende de forma ciega, la Hessiana actúa como un mapa topográfico. En este entorno de 3 características, Newton resulta con una rapidez increíble, aunque su costo computacional crece de forma cúbica con el número de variables.
+Es como si uno fuera bajando la montaña a pie y el otro tuviera un mapa topográfico tan perfecto que puede saltar de una cima a otra. Al final, ambos llegan al mismo punto, pero la elegancia matemática de Newton es difícil de ignorar.
 
 ---
 
-## Tabla Comparativa
+## Un breve resumen de lo aprendido
 
-| Característica | Lineal | Polinómica | Logística |
-|---|---|---|---|
-| **Tipo de Problema** | Predicción continua | Predicción continua (no lineal) | Clasificación binaria |
-| **Función de Costo** | MSE | MSE | Log-loss (cross-entropy) |
-| **R² / Accuracy** | 0.47 | ~0.55-0.65 | ~80% |
-| **Convergencia** | Al instante (analítica) | Al instante | Iterativa (GD ms, Newton ns) |
-| **Supuestos Clave** | Linealidad, homocedasticidad | Linealidad (espacio transformado) | Independencia, log-odds lineales |
+| ¿Qué buscamos? | Lo más simple (Lineal) | Con curvas (Polinómica) | Sí o No (Logística) |
+| :--- | :--- | :--- | :--- |
+| **El objetivo** | Una línea que cruce los datos | Una curva que se adapte | Una frontera que separe |
+| **La sorpresa** | El gradiente siempre llega | Cuidado con pasarse de listo | Hay métodos que "saltan" al éxito |
+| **Resultado** | Funciona bien casi siempre | Captura detalles complejos | Ideal para clasificar |
 
 ---
 
-## Síntesis Técnica
+### Reflexión final
 
-Entender la optimización es la base del aprendizaje automático. No es necesario memorizar algoritmos aislados, sino comprender:
-1. **Definición del error** (función de costo)
-2. **Búsqueda del mínimo** (gradiente, Newton, ecuación normal)
-3. **Control de complejidad** (regularización)
+Al final del día, estos modelos son solo herramientas para ayudarnos a ver patrones donde solo parece haber ruido. No hace falta memorizar cada ecuación, sino entender la intención detrás de ellas: **escuchar lo que los datos intentan decirnos.**
 
-Todo lo demás constituye variaciones sobre estos pilares fundamentales.
-
-### Recursos
-
-- **Notebook original**: Código fuente del análisis.
-- **Dataset**: California Housing (scikit-learn) — censo 1990.
-- **Visualización**: D3.js v7 con animaciones sincronizadas.
-
----
-
-**Utiliza los controles de la visualización superior para observar la convergencia de forma directa.**
-
+### Recursos para curiosear
+- **Código fuente**: Todo el motor que mueve estas animaciones está en GitHub.
+- **Datos**: Usamos el censo de California de 1990.
+- **Visualización**: Hecho con mucho cariño usando D3.js.
 
 <div class="methodology-box" style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px; border-left: 4px solid var(--secondary);">
-    <p style="margin: 0; font-size: 0.95rem;">📌 <strong>Sobre este proyecto:</strong> Esta es la segunda versión del análisis, rediseñada como aplicación interactiva. El proyecto original está disponible en <a href="https://colab.research.google.com/drive/1wrEKoYuQHJkn9a3lEFVlo8ElW89SFcTg?usp=sharing" target="_blank" style="color: var(--secondary); font-weight: 600;">Google Colab</a>.</p>
+    <p style="margin: 0; font-size: 0.95rem;">📌 <strong>Nota:</strong> Este proyecto nació como una curiosidad personal para entender qué pasa "bajo el capó" de los algoritmos que usamos todos los días en Machine Learning.</p>
 </div>

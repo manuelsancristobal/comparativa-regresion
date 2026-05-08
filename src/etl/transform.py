@@ -401,7 +401,11 @@ def _compute_scatter_indices(n_total, n_samples=None, seed=None):
 
 
 def build_linear_frames(data_linear):
-    """Build animation frames for linear regression with growing data."""
+    """Build animation frames for linear regression with growing data.
+
+    GD usa warm start desde slope=0 para mostrar convergencia en tiempo real.
+    Analytical y sklearn recalculan la solución instantánea en cada frame.
+    """
     x_train = data_linear["x_train"]
     y_train = data_linear["y_train"]
     x_test = data_linear["x_test"]
@@ -410,14 +414,35 @@ def build_linear_frames(data_linear):
     n_points_seq = sample_points_sequence(len(y_train), N_FRAMES)
     scatter_idx = _compute_scatter_indices(len(x_train))
 
+    # GD warm start: arranca desde pendiente 0
+    gd_slope = 0.0
+    gd_intercept = 0.0
+    lr = GD_LEARNING_RATE
+    iters_per_frame = max(1, GD_MAX_ITERS // N_FRAMES)
+
     frames = []
     for i, n_points in enumerate(n_points_seq):
         x_sub = x_train[:n_points]
         y_sub = y_train[:n_points]
 
+        # Analytical y sklearn: solución instantánea
         ana = compute_analytical_linear(x_sub, y_sub, x_test, y_test)
-        gd = compute_gradient_descent_linear(x_sub, y_sub, x_test, y_test, n_iters=300)
         sk = compute_sklearn_linear(x_sub, y_sub, x_test, y_test)
+
+        # GD: iteraciones con warm start sobre datos actuales
+        m = len(y_sub)
+        for _ in range(iters_per_frame):
+            y_pred = gd_intercept + gd_slope * x_sub
+            d_intercept = -2 / m * np.sum(y_sub - y_pred)
+            d_slope = -2 / m * np.sum((y_sub - y_pred) * x_sub)
+            gd_intercept -= lr * d_intercept
+            gd_slope -= lr * d_slope
+
+        # MSE del estado actual de GD sobre datos completos
+        gd_pred_train = gd_intercept + gd_slope * x_train
+        gd_pred_test = gd_intercept + gd_slope * x_test
+        gd_mse_train = float(np.mean((y_train - gd_pred_train) ** 2))
+        gd_mse_test = float(np.mean((y_test - gd_pred_test) ** 2))
 
         frames.append(
             {
@@ -426,10 +451,10 @@ def build_linear_frames(data_linear):
                 "n_scatter": max(2, int(np.searchsorted(scatter_idx, n_points))),
                 "analytical": ana,
                 "gradient_descent": {
-                    "slope": gd["slope"],
-                    "intercept": gd["intercept"],
-                    "mse_train": gd["mse_train"],
-                    "mse_test": gd["mse_test"],
+                    "slope": float(gd_slope),
+                    "intercept": float(gd_intercept),
+                    "mse_train": gd_mse_train,
+                    "mse_test": gd_mse_test,
                 },
                 "sklearn": sk,
             }
@@ -449,7 +474,11 @@ def build_linear_frames(data_linear):
 
 
 def build_polynomial_frames(data_polynomial):
-    """Build animation frames for polynomial regression with growing data."""
+    """Build animation frames for polynomial regression with growing data.
+
+    GD usa warm start desde coeficientes=0 para cada grado.
+    Las curvas arrancan planas y convergen gradualmente.
+    """
     x_train = data_polynomial["x_train"]
     y_train = data_polynomial["y_train"]
     x_test = data_polynomial["x_test"]
@@ -458,25 +487,57 @@ def build_polynomial_frames(data_polynomial):
     n_points_seq = sample_points_sequence(len(y_train), N_FRAMES)
     scatter_idx = _compute_scatter_indices(len(x_train))
 
-    frames_by_degree = {}
-    sklearn_by_degree = {}
+    # Learning rate menor para polynomial (Vandermonde amplifica magnitudes)
+    poly_lr = 0.005
+    poly_iters_per_frame = 20
 
+    # Warm start: coeficientes en 0 para cada grado
+    gd_coeffs = {deg: np.zeros(deg + 1) for deg in POLY_DEGREES}
+
+    # sklearn de referencia sobre datos completos
+    sklearn_by_degree = {}
     for degree in POLY_DEGREES:
-        ols_history = compute_polynomial_ols(x_train, y_train, x_test, y_test, degree, n_points_seq)
-        sklearn_result = compute_sklearn_polynomial(x_train, y_train, x_test, y_test, degree)
-        sklearn_by_degree[degree] = sklearn_result
-        frames_by_degree[degree] = ols_history
+        sklearn_by_degree[degree] = compute_sklearn_polynomial(x_train, y_train, x_test, y_test, degree)
 
     frames = []
-    for frame_idx in range(N_FRAMES):
-        n_points = n_points_seq[frame_idx]
+    for frame_idx, n_points in enumerate(n_points_seq):
+        x_sub = x_train[:n_points]
+        y_sub = y_train[:n_points]
+        m = len(y_sub)
+
         frame = {
             "frame": frame_idx,
             "n_points": int(n_points),
             "n_scatter": max(2, int(np.searchsorted(scatter_idx, n_points))),
         }
+
         for degree in POLY_DEGREES:
-            frame[f"degree_{degree}"] = frames_by_degree[degree][frame_idx]
+            coeffs = gd_coeffs[degree]
+            X_sub = build_vandermonde(x_sub, degree)
+
+            # GD warm start sobre datos actuales
+            for _ in range(poly_iters_per_frame):
+                y_pred = X_sub @ coeffs
+                gradient = (2 / m) * (X_sub.T @ (y_pred - y_sub))
+                # Clamp gradiente para evitar overflow en grados altos
+                gradient = np.clip(gradient, -1e6, 1e6)
+                coeffs = coeffs - poly_lr * gradient
+
+            gd_coeffs[degree] = coeffs
+
+            # MSE sobre datos completos
+            X_train_full = build_vandermonde(x_train, degree)
+            X_test_full = build_vandermonde(x_test, degree)
+            mse_train = float(np.mean((y_train - X_train_full @ coeffs) ** 2))
+            mse_test = float(np.mean((y_test - X_test_full @ coeffs) ** 2))
+
+            frame[f"degree_{degree}"] = {
+                "n_points": int(n_points),
+                "coefficients": coeffs.tolist(),
+                "mse_train": mse_train,
+                "mse_test": mse_test,
+            }
+
         frames.append(frame)
 
     scatter_x = x_train[scatter_idx]
@@ -496,8 +557,19 @@ def _compute_log_loss(X, y, weights, intercept):
     return float(-np.mean(y * np.log(p + 1e-15) + (1 - y) * np.log(1 - p + 1e-15)))
 
 
+def _compute_log_loss_aug(X_aug, y, weights):
+    """Compute log loss para matriz aumentada (con columna de intercept)."""
+    z = X_aug @ weights
+    p = sigmoid(z)
+    return float(-np.mean(y * np.log(p + 1e-15) + (1 - y) * np.log(1 - p + 1e-15)))
+
+
 def build_logistic_frames(data_logistic):
-    """Build animation frames for logistic regression with growing data."""
+    """Build animation frames for logistic regression with growing data.
+
+    GD y Newton-Raphson usan warm start desde weights=0.
+    sklearn recalcula la solución instantánea en cada frame.
+    """
     X_train = data_logistic["x_train"]
     y_train = data_logistic["y_train"]
     X_test = data_logistic["x_test"]
@@ -506,21 +578,54 @@ def build_logistic_frames(data_logistic):
     n_points_seq = sample_points_sequence(len(y_train), N_FRAMES, min_points=30)
     scatter_idx = _compute_scatter_indices(len(y_train))
 
+    # Warm start: todos los pesos en 0
+    n_features = X_train.shape[1] + 1  # +1 por columna de intercept
+    gd_weights = np.zeros(n_features)
+    newton_weights = np.zeros(n_features)
+    lr = LOGISTIC_LEARNING_RATE
+    gd_iters_per_frame = max(1, LOGISTIC_MAX_ITERS // N_FRAMES)
+    newton_iters_per_frame = max(1, NEWTON_MAX_ITERS // N_FRAMES)
+
     frames = []
     for _, n_points in enumerate(n_points_seq):
         X_sub = X_train[:n_points]
         y_sub = y_train[:n_points]
 
-        # Skip if not both classes present
+        # Saltar si no hay ambas clases
         if len(np.unique(y_sub)) < 2:
             continue
 
-        gd = compute_logistic_gd(X_sub, y_sub, X_test, y_test, n_iters=500)
-        newton = compute_logistic_newton(X_sub, y_sub, X_test, y_test, n_iters=10)
+        X_sub_aug = np.column_stack([np.ones(len(X_sub)), X_sub])
+        X_test_aug = np.column_stack([np.ones(len(X_test)), X_test])
+        m = len(y_sub)
 
-        gd_last = gd["history"][-1]
-        newton_last = newton["history"][-1]
+        # GD: iteraciones con warm start
+        for _ in range(gd_iters_per_frame):
+            z = X_sub_aug @ gd_weights
+            p = sigmoid(z)
+            grad = (1 / m) * (X_sub_aug.T @ (p - y_sub))
+            gd_weights -= lr * grad
 
+        # Newton-Raphson: iteraciones con warm start
+        for _ in range(newton_iters_per_frame):
+            z = X_sub_aug @ newton_weights
+            p = sigmoid(z)
+            grad = (1 / m) * (X_sub_aug.T @ (p - y_sub))
+            D = np.diag(p * (1 - p))
+            hessian = (1 / m) * (X_sub_aug.T @ D @ X_sub_aug)
+            try:
+                h_inv = np.linalg.inv(hessian + 1e-6 * np.eye(n_features))
+                newton_weights -= h_inv @ grad
+            except np.linalg.LinAlgError:
+                newton_weights -= 0.1 * grad
+
+        # Log losses del estado actual
+        gd_ll_train = _compute_log_loss_aug(X_sub_aug, y_sub, gd_weights)
+        gd_ll_test = _compute_log_loss_aug(X_test_aug, y_test, gd_weights)
+        newton_ll_train = _compute_log_loss_aug(X_sub_aug, y_sub, newton_weights)
+        newton_ll_test = _compute_log_loss_aug(X_test_aug, y_test, newton_weights)
+
+        # sklearn: solución instantánea
         try:
             sk = compute_sklearn_logistic(X_sub, y_sub, X_test, y_test)
             sk_w = np.array(sk["weights"])
@@ -533,10 +638,10 @@ def build_logistic_frames(data_logistic):
             }
         except Exception:
             sk_frame = {
-                "weights": gd_last["weights"],
-                "intercept": gd_last["intercept"],
-                "log_loss_train": gd_last["log_loss_train"],
-                "log_loss_test": gd_last["log_loss_test"],
+                "weights": gd_weights[1:].tolist(),
+                "intercept": float(gd_weights[0]),
+                "log_loss_train": gd_ll_train,
+                "log_loss_test": gd_ll_test,
             }
 
         frames.append(
@@ -545,22 +650,22 @@ def build_logistic_frames(data_logistic):
                 "n_points": int(n_points),
                 "n_scatter": max(2, int(np.searchsorted(scatter_idx, n_points))),
                 "gradient_descent": {
-                    "weights": gd_last["weights"],
-                    "intercept": gd_last["intercept"],
-                    "log_loss_train": gd_last["log_loss_train"],
-                    "log_loss_test": gd_last["log_loss_test"],
+                    "weights": gd_weights[1:].tolist(),
+                    "intercept": float(gd_weights[0]),
+                    "log_loss_train": gd_ll_train,
+                    "log_loss_test": gd_ll_test,
                 },
                 "newton_raphson": {
-                    "weights": newton_last["weights"],
-                    "intercept": newton_last["intercept"],
-                    "log_loss_train": newton_last["log_loss_train"],
-                    "log_loss_test": newton_last["log_loss_test"],
+                    "weights": newton_weights[1:].tolist(),
+                    "intercept": float(newton_weights[0]),
+                    "log_loss_train": newton_ll_train,
+                    "log_loss_test": newton_ll_test,
                 },
                 "sklearn": sk_frame,
             }
         )
 
-    # ROC for full sklearn
+    # ROC sobre sklearn con datos completos
     sklearn_full = compute_sklearn_logistic(X_train, y_train, X_test, y_test)
     roc_curve_result = compute_roc_curve(y_test, sklearn_full["y_prob_test"])
 

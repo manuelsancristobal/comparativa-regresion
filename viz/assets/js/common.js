@@ -146,12 +146,36 @@ const CommonUtils = (() => {
     };
   };
 
+  // Throttled animation loop (~15fps for consistent speed across hardware)
+  const TARGET_FPS = 15;
+  const TRANSITION_MS = 150;
+
+  const createAnimationLoop = (onTick) => {
+    let id = null;
+    let last = 0;
+    const interval = 1000 / TARGET_FPS;
+
+    const tick = (now) => {
+      id = requestAnimationFrame(tick);
+      if (now - last < interval) return;
+      last = now - ((now - last) % interval);
+      if (!onTick()) { stop(); }
+    };
+
+    const start = () => { last = performance.now(); id = requestAnimationFrame(tick); };
+    const stop = () => { if (id) { cancelAnimationFrame(id); id = null; } };
+
+    return { start, stop };
+  };
+
   return {
     formatNumber,
     createScales,
     createPlaybackControls,
     createMethodToggles,
     createAnnotationBanner,
-    createAxes
+    createAxes,
+    createAnimationLoop,
+    TRANSITION_MS
   };
 })();
