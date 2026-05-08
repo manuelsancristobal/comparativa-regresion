@@ -404,6 +404,19 @@ footer {
   font-size: 0.9em;
 }
 
+/* Reference lines (sklearn fixed) */
+.reference-line {
+  stroke-dasharray: 6, 4;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.reference-label {
+  opacity: 0.6;
+  font-size: 11px;
+  pointer-events: none;
+}
+
 /* Utilities */
 .text-center {
   text-align: center;

@@ -49,7 +49,8 @@ def test_linear_json_structure():
     frame = data["frames"][0]
     assert "analytical" in frame
     assert "gradient_descent" in frame
-    assert "sklearn" in frame
+    # sklearn solo existe a nivel top-level (referencia fija)
+    assert "sklearn" not in frame
 
 
 def test_polynomial_json_structure():
@@ -101,7 +102,10 @@ def test_logistic_json_structure():
     frame = data["frames"][0]
     assert "gradient_descent" in frame
     assert "newton_raphson" in frame
-    assert "sklearn" in frame
+    # sklearn solo existe a nivel top-level (referencia fija)
+    assert "sklearn" not in frame
+    assert "log_loss_train" in data["sklearn"]
+    assert "log_loss_test" in data["sklearn"]
 
 
 def test_json_files_serializable():

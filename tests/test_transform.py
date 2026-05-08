@@ -88,7 +88,9 @@ def test_linear_frames_structure(linear_data):
     assert "frame" in frame
     assert "analytical" in frame
     assert "gradient_descent" in frame
-    assert "sklearn" in frame
+    # sklearn solo existe a nivel top-level (referencia fija)
+    assert "sklearn" not in frame
+    assert "sklearn" in result
 
 
 def test_polynomial_frames_structure(polynomial_data):
@@ -118,7 +120,11 @@ def test_logistic_frames_structure(logistic_data):
     assert "frame" in frame
     assert "gradient_descent" in frame
     assert "newton_raphson" in frame
-    assert "sklearn" in frame
+    # sklearn solo existe a nivel top-level (referencia fija)
+    assert "sklearn" not in frame
+    assert "sklearn" in result
+    assert "log_loss_train" in result["sklearn"]
+    assert "log_loss_test" in result["sklearn"]
 
     # Check ROC curve structure
     assert "fpr" in result["roc_curve"]

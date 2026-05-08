@@ -24,7 +24,8 @@ const LogisticRaceViz = (() => {
     sklearn: '#2ca02c'
   };
   const CLASS_COLORS = { 1: '#4a90d9', 0: '#e8943a' };
-  const METHODS = ['gradient_descent', 'newton_raphson', 'sklearn'];
+  const METHODS = ['gradient_descent', 'newton_raphson'];
+  const METHODS_ALL = ['gradient_descent', 'newton_raphson', 'sklearn'];
   const METHOD_LABELS = { gradient_descent: 'GD', newton_raphson: 'Newton', sklearn: 'SK' };
 
   let els = {};
@@ -73,12 +74,33 @@ const LogisticRaceViz = (() => {
 
     const scatterGroup = g.append('g').attr('class', 'scatter-group');
 
+    // Frontera sklearn fija (referencia dashed)
+    const skRef = data.sklearn;
+    const skW = skRef.weights;
+    const skB = skRef.intercept;
+    const skPts = [];
+    const xDom = xScale.domain();
+    const yDom = yScale.domain();
+    for (let x = xDom[0]; x <= xDom[1]; x += (xDom[1] - xDom[0]) / 50) {
+      const y = -(skW[0] * x + skB) / (skW[1] + 1e-10);
+      if (y >= yDom[0] && y <= yDom[1]) skPts.push({ x, y });
+    }
+    const skBoundary = g.append('path')
+      .attr('class', 'reference-line')
+      .attr('fill', 'none').attr('stroke', COLORS.sklearn)
+      .attr('stroke-width', 2)
+      .attr('stroke-dasharray', '6,4')
+      .attr('opacity', 0.6);
+    if (skPts.length > 1) {
+      skBoundary.attr('d', d3.line().x(d => xScale(d.x)).y(d => yScale(d.y))(skPts));
+    }
+
     const boundaryPaths = {};
     METHODS.forEach(method => {
       boundaryPaths[method] = g.append('path')
         .attr('fill', 'none').attr('stroke', COLORS[method])
         .attr('stroke-width', 2)
-        .attr('stroke-dasharray', method === 'sklearn' ? 'none' : '5,3')
+        .attr('stroke-dasharray', '5,3')
         .attr('opacity', 0.8);
     });
 
@@ -88,7 +110,7 @@ const LogisticRaceViz = (() => {
       .attr('font-size', '13px')
       .attr('fill', '#555');
 
-    els.panelA = { xScale, yScale, scatterGroup, boundaryPaths, counter, w, h };
+    els.panelA = { xScale, yScale, scatterGroup, boundaryPaths, skBoundary, counter, w, h };
   };
 
   const setupPanelB = () => {
@@ -104,14 +126,14 @@ const LogisticRaceViz = (() => {
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const xScale = d3.scaleBand()
-      .domain(METHODS.map(m => METHOD_LABELS[m]))
+      .domain(METHODS_ALL.map(m => METHOD_LABELS[m]))
       .range([0, w]).padding(0.3);
     g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(xScale));
     const yAxisG = g.append('g');
 
     const bars = {};
     const barLabels = {};
-    METHODS.forEach(method => {
+    METHODS_ALL.forEach(method => {
       const label = METHOD_LABELS[method];
       bars[method] = g.append('rect')
         .attr('x', xScale(label)).attr('width', xScale.bandwidth())
@@ -217,9 +239,12 @@ const LogisticRaceViz = (() => {
   };
 
   const updateBoundaries = (frameData) => {
-    const { xScale, yScale, boundaryPaths } = els.panelA;
+    const { xScale, yScale, boundaryPaths, skBoundary } = els.panelA;
     const xDomain = xScale.domain();
     const yDomain = yScale.domain();
+
+    // Toggle visibilidad frontera sklearn de referencia
+    skBoundary.attr('visibility', state.visibleMethods.sklearn !== false ? 'visible' : 'hidden');
 
     METHODS.forEach(method => {
       const visible = state.visibleMethods[method];
@@ -252,24 +277,29 @@ const LogisticRaceViz = (() => {
   const updateLogLoss = (frameData) => {
     const { bars, barLabels, yAxisG, h } = els.panelB;
 
-    const vals = [];
+    // Construir mapa: frames para métodos iterativos, fijo para sklearn
+    const lossMap = {};
     METHODS.forEach(m => {
       if (state.visibleMethods[m] && frameData[m]) {
-        const loss = frameData[m].log_loss_train || 0;
-        vals.push(loss);
+        lossMap[m] = frameData[m].log_loss_train || 0;
       }
     });
+    if (state.visibleMethods.sklearn !== false) {
+      lossMap.sklearn = data.sklearn.log_loss_train || 0;
+    }
+
+    const vals = Object.values(lossMap);
     if (vals.length === 0) return;
 
     const yScale = d3.scaleLinear().domain([0, d3.max(vals) * 1.1]).range([h, 0]);
     yAxisG.call(d3.axisLeft(yScale).ticks(5));
 
-    METHODS.forEach(method => {
-      const show = state.visibleMethods[method] && frameData[method];
+    METHODS_ALL.forEach(method => {
+      const show = lossMap[method] !== undefined;
       bars[method].attr('visibility', show ? 'visible' : 'hidden');
       barLabels[method].attr('visibility', show ? 'visible' : 'hidden');
       if (!show) return;
-      const loss = frameData[method].log_loss_train || 0;
+      const loss = lossMap[method];
       const bY = yScale(loss);
       applyTransition(bars[method]).attr('y', bY).attr('height', h - bY);
       applyTransition(barLabels[method]).attr('y', bY - 5).text(CommonUtils.formatNumber(loss, 3));
@@ -309,7 +339,7 @@ const LogisticRaceViz = (() => {
     onSpeedChange: (s) => { state.speed = s; }
   });
 
-  METHODS.forEach(method => {
+  METHODS_ALL.forEach(method => {
     d3.select('#methods-logistic').append('div').attr('class', 'toggle-item')
       .html(`<input type="checkbox" id="toggle-log-${method}" checked>
         <label for="toggle-log-${method}"><span class="color-indicator" style="background: ${COLORS[method]}"></span> ${method.replace(/_/g, ' ')}</label>`)

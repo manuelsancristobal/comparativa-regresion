@@ -70,6 +70,29 @@ const PolynomialRaceViz = (() => {
     const xDomain = xScale.domain();
     const xRange = d3.range(xDomain[0], xDomain[1], (xDomain[1] - xDomain[0]) / 100);
 
+    // Curvas sklearn de referencia (dashed, fijas)
+    const skRefPaths = {};
+    DEGREES.forEach(deg => {
+      const skData = data.sklearn[deg];
+      if (!skData) return;
+      // sklearn usa PolynomialFeatures con include_bias=True → coef_[0]=0 + intercept separado
+      // Vandermonde: coeffs[i] * x^i → reconstruir desde sklearn
+      const skCoeffs = skData.coefficients;
+      const skIntercept = skData.intercept;
+      const pts = xRange.map(x => {
+        let y = skIntercept;
+        for (let i = 0; i < skCoeffs.length; i++) y += skCoeffs[i] * Math.pow(x, i);
+        return { x, y };
+      });
+      skRefPaths[deg] = g.append('path')
+        .attr('class', 'reference-line')
+        .attr('fill', 'none').attr('stroke', COLORS[deg])
+        .attr('stroke-width', 1.5)
+        .attr('stroke-dasharray', '6,4')
+        .attr('opacity', 0.4)
+        .attr('d', d3.line().x(d => xScale(d.x)).y(d => yScale(d.y))(pts));
+    });
+
     const curvePaths = {};
     DEGREES.forEach(deg => {
       curvePaths[deg] = g.append('path')
@@ -83,7 +106,7 @@ const PolynomialRaceViz = (() => {
       .attr('font-size', '13px')
       .attr('fill', '#555');
 
-    els.panelA = { xScale, yScale, scatterGroup, curvePaths, xRange, counter, w, h };
+    els.panelA = { xScale, yScale, scatterGroup, curvePaths, skRefPaths, xRange, counter, w, h };
   };
 
   const setupPanelB = () => {
@@ -191,7 +214,14 @@ const PolynomialRaceViz = (() => {
   };
 
   const updateCurves = (frameData) => {
-    const { xScale, yScale, curvePaths, xRange } = els.panelA;
+    const { xScale, yScale, curvePaths, skRefPaths, xRange } = els.panelA;
+
+    // Toggle visibilidad curvas de referencia sklearn
+    DEGREES.forEach(deg => {
+      if (skRefPaths[deg]) {
+        skRefPaths[deg].attr('visibility', state.visibleDegrees[deg] ? 'visible' : 'hidden');
+      }
+    });
 
     DEGREES.forEach(deg => {
       const key = `degree_${deg}`;

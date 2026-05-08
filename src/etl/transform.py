@@ -425,9 +425,8 @@ def build_linear_frames(data_linear):
         x_sub = x_train[:n_points]
         y_sub = y_train[:n_points]
 
-        # Analytical y sklearn: solución instantánea
+        # Analytical: solución instantánea
         ana = compute_analytical_linear(x_sub, y_sub, x_test, y_test)
-        sk = compute_sklearn_linear(x_sub, y_sub, x_test, y_test)
 
         # GD: iteraciones con warm start sobre datos actuales
         m = len(y_sub)
@@ -456,7 +455,6 @@ def build_linear_frames(data_linear):
                     "mse_train": gd_mse_train,
                     "mse_test": gd_mse_test,
                 },
-                "sklearn": sk,
             }
         )
 
@@ -625,25 +623,6 @@ def build_logistic_frames(data_logistic):
         newton_ll_train = _compute_log_loss_aug(X_sub_aug, y_sub, newton_weights)
         newton_ll_test = _compute_log_loss_aug(X_test_aug, y_test, newton_weights)
 
-        # sklearn: solución instantánea
-        try:
-            sk = compute_sklearn_logistic(X_sub, y_sub, X_test, y_test)
-            sk_w = np.array(sk["weights"])
-            sk_b = sk["intercept"]
-            sk_frame = {
-                "weights": sk["weights"],
-                "intercept": sk_b,
-                "log_loss_train": _compute_log_loss(X_sub, y_sub, sk_w, sk_b),
-                "log_loss_test": _compute_log_loss(X_test, y_test, sk_w, sk_b),
-            }
-        except Exception:
-            sk_frame = {
-                "weights": gd_weights[1:].tolist(),
-                "intercept": float(gd_weights[0]),
-                "log_loss_train": gd_ll_train,
-                "log_loss_test": gd_ll_test,
-            }
-
         frames.append(
             {
                 "frame": len(frames),
@@ -661,13 +640,16 @@ def build_logistic_frames(data_logistic):
                     "log_loss_train": newton_ll_train,
                     "log_loss_test": newton_ll_test,
                 },
-                "sklearn": sk_frame,
             }
         )
 
-    # ROC sobre sklearn con datos completos
+    # ROC y log-loss sobre sklearn con datos completos
     sklearn_full = compute_sklearn_logistic(X_train, y_train, X_test, y_test)
     roc_curve_result = compute_roc_curve(y_test, sklearn_full["y_prob_test"])
+    sk_w = np.array(sklearn_full["weights"])
+    sk_b = sklearn_full["intercept"]
+    sklearn_full["log_loss_train"] = _compute_log_loss(X_train, y_train, sk_w, sk_b)
+    sklearn_full["log_loss_test"] = _compute_log_loss(X_test, y_test, sk_w, sk_b)
 
     X_scatter = X_train[scatter_idx]
     y_scatter = y_train[scatter_idx]

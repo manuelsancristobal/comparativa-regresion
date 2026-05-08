@@ -23,7 +23,8 @@ const LinearRaceViz = (() => {
     gradient_descent: '#d62728',
     sklearn: '#2ca02c'
   };
-  const METHODS = ['analytical', 'gradient_descent', 'sklearn'];
+  const METHODS = ['analytical', 'gradient_descent'];
+  const METHODS_ALL = ['analytical', 'gradient_descent', 'sklearn'];
   const METHOD_LABELS = { analytical: 'Ana', gradient_descent: 'GD', sklearn: 'SK' };
 
   let els = {};
@@ -72,6 +73,27 @@ const LinearRaceViz = (() => {
 
     const scatterGroup = g.append('g').attr('class', 'scatter-group');
 
+    // Línea sklearn fija (referencia dashed)
+    const skRef = data.sklearn;
+    const skLine = g.append('line')
+      .attr('class', 'reference-line')
+      .attr('stroke', COLORS.sklearn)
+      .attr('stroke-width', 2)
+      .attr('stroke-dasharray', '6,4')
+      .attr('opacity', 0.6)
+      .attr('x1', xScale(xScale.domain()[0]))
+      .attr('y1', yScale(skRef.intercept + skRef.slope * xScale.domain()[0]))
+      .attr('x2', xScale(xScale.domain()[1]))
+      .attr('y2', yScale(skRef.intercept + skRef.slope * xScale.domain()[1]));
+    const skLabel = g.append('text')
+      .attr('class', 'reference-label')
+      .attr('fill', COLORS.sklearn)
+      .attr('font-size', '11px')
+      .attr('opacity', 0.6)
+      .attr('x', xScale(xScale.domain()[1]) - 10)
+      .attr('y', yScale(skRef.intercept + skRef.slope * xScale.domain()[1]) - 10)
+      .text('SK (ref)');
+
     const lines = {};
     const labels = {};
     METHODS.forEach(method => {
@@ -91,7 +113,7 @@ const LinearRaceViz = (() => {
       .attr('font-size', '13px')
       .attr('fill', '#555');
 
-    els.panelA = { xScale, yScale, scatterGroup, lines, labels, counter, w, h };
+    els.panelA = { xScale, yScale, scatterGroup, lines, labels, skLine, skLabel, counter, w, h };
   };
 
   const setupPanelB = () => {
@@ -107,7 +129,7 @@ const LinearRaceViz = (() => {
     const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
     const xScale = d3.scaleBand()
-      .domain(METHODS.map(m => METHOD_LABELS[m]))
+      .domain(METHODS_ALL.map(m => METHOD_LABELS[m]))
       .range([0, w]).padding(0.2);
 
     g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(xScale));
@@ -115,7 +137,7 @@ const LinearRaceViz = (() => {
 
     const trainBars = {};
     const testBars = {};
-    METHODS.forEach(method => {
+    METHODS_ALL.forEach(method => {
       const label = METHOD_LABELS[method];
       const bw = xScale.bandwidth() / 2;
       trainBars[method] = g.append('rect')
@@ -147,12 +169,25 @@ const LinearRaceViz = (() => {
     const allSlopes = data.frames.flatMap(f =>
       METHODS.map(m => f[m]?.slope).filter(v => v !== undefined)
     );
+    // Incluir slope sklearn para rango del eje Y
+    allSlopes.push(data.sklearn.slope);
     const yScale = d3.scaleLinear()
       .domain([d3.min(allSlopes) * 0.9, d3.max(allSlopes) * 1.1])
       .range([h, 0]);
 
     g.append('g').attr('transform', `translate(0,${h})`).call(d3.axisBottom(xScale).ticks(5));
     g.append('g').call(d3.axisLeft(yScale));
+
+    // Línea horizontal de referencia sklearn (slope final)
+    const skRefLine = g.append('line')
+      .attr('class', 'reference-line')
+      .attr('x1', 0).attr('x2', w)
+      .attr('y1', yScale(data.sklearn.slope))
+      .attr('y2', yScale(data.sklearn.slope))
+      .attr('stroke', COLORS.sklearn)
+      .attr('stroke-width', 1.5)
+      .attr('stroke-dasharray', '6,4')
+      .attr('opacity', 0.6);
 
     const paths = {};
     METHODS.forEach(method => {
@@ -163,7 +198,7 @@ const LinearRaceViz = (() => {
         .attr('opacity', 0.8);
     });
 
-    els.panelC = { xScale, yScale, paths, w, h };
+    els.panelC = { xScale, yScale, paths, skRefLine, w, h };
   };
 
   // ─── UPDATE ───
@@ -223,9 +258,14 @@ const LinearRaceViz = (() => {
   };
 
   const updateLines = (frameData) => {
-    const { xScale, yScale, lines, labels } = els.panelA;
+    const { xScale, yScale, lines, labels, skLine, skLabel } = els.panelA;
     const x0 = xScale.domain()[0];
     const x1 = xScale.domain()[1];
+
+    // Sklearn referencia: toggle visibilidad
+    const skVisible = state.visibleMethods.sklearn !== false;
+    skLine.attr('visibility', skVisible ? 'visible' : 'hidden');
+    skLabel.attr('visibility', skVisible ? 'visible' : 'hidden');
 
     METHODS.forEach(method => {
       const visible = state.visibleMethods[method];
@@ -249,12 +289,19 @@ const LinearRaceViz = (() => {
   const updateMSE = (frameData) => {
     const { trainBars, testBars, yAxisG, h } = els.panelB;
 
-    const vals = [];
+    // Construir mapa de valores MSE: frames para métodos iterativos, fijo para sklearn
+    const mseMap = {};
     METHODS.forEach(m => {
       if (state.visibleMethods[m] && frameData[m]) {
-        vals.push(frameData[m].mse_train, frameData[m].mse_test);
+        mseMap[m] = { mse_train: frameData[m].mse_train, mse_test: frameData[m].mse_test };
       }
     });
+    if (state.visibleMethods.sklearn !== false) {
+      mseMap.sklearn = { mse_train: data.sklearn.mse_train, mse_test: data.sklearn.mse_test };
+    }
+
+    const vals = [];
+    Object.values(mseMap).forEach(v => { vals.push(v.mse_train, v.mse_test); });
     if (vals.length === 0) return;
 
     const minV = Math.max(0.001, d3.min(vals) * 0.9);
@@ -262,20 +309,23 @@ const LinearRaceViz = (() => {
     const yScale = d3.scaleLog().domain([minV, maxV]).range([h, 0]);
     yAxisG.call(d3.axisLeft(yScale).ticks(4, '.2f'));
 
-    METHODS.forEach(method => {
-      const show = state.visibleMethods[method] && frameData[method];
+    METHODS_ALL.forEach(method => {
+      const show = !!mseMap[method];
       trainBars[method].attr('visibility', show ? 'visible' : 'hidden');
       testBars[method].attr('visibility', show ? 'visible' : 'hidden');
       if (!show) return;
-      const tY = yScale(Math.max(minV, frameData[method].mse_train));
-      const eY = yScale(Math.max(minV, frameData[method].mse_test));
+      const tY = yScale(Math.max(minV, mseMap[method].mse_train));
+      const eY = yScale(Math.max(minV, mseMap[method].mse_test));
       applyTransition(trainBars[method]).attr('y', tY).attr('height', h - tY);
       applyTransition(testBars[method]).attr('y', eY).attr('height', h - eY);
     });
   };
 
   const updateConvergence = (frameIdx) => {
-    const { xScale, yScale, paths } = els.panelC;
+    const { xScale, yScale, paths, skRefLine } = els.panelC;
+
+    // Toggle visibilidad línea referencia sklearn
+    skRefLine.attr('visibility', state.visibleMethods.sklearn !== false ? 'visible' : 'hidden');
 
     METHODS.forEach(method => {
       if (!state.visibleMethods[method]) {
@@ -332,7 +382,7 @@ const LinearRaceViz = (() => {
     onSpeedChange: (s) => { state.speed = s; }
   });
 
-  CommonUtils.createMethodToggles('#methods-linear', Object.keys(COLORS), COLORS,
+  CommonUtils.createMethodToggles('#methods-linear', METHODS_ALL, COLORS,
     (method, visible) => { state.visibleMethods[method] = visible; update(state.currentFrame); }
   );
 
