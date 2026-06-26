@@ -158,6 +158,16 @@ input[type="checkbox"] {
   grid-template-columns: 2fr 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
+  align-items: start;
+}
+
+/* Iframe Integration - Show only Panel A */
+body.is-iframe .panels {
+  grid-template-columns: 1fr;
+}
+
+body.is-iframe .panel:not(:first-child) {
+  display: none;
 }
 
 @media (max-width: 900px) {

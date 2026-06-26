@@ -330,8 +330,9 @@ const PolynomialRaceViz = (() => {
     onSpeedChange: (s) => { state.speed = s; }
   });
 
+  const toggleDiv = d3.select('#methods-poly').append('div').attr('class', 'method-toggle');
   DEGREES.forEach(d => {
-    d3.select('#methods-poly').append('div').attr('class', 'toggle-item')
+    toggleDiv.append('div').attr('class', 'toggle-item')
       .html(`<input type="checkbox" id="toggle-degree-${d}" checked>
         <label for="toggle-degree-${d}"><span class="color-indicator" style="background: ${COLORS[d]}"></span> Degree ${d}</label>`)
       .select('input').on('change', function() { state.visibleDegrees[d] = this.checked; update(state.currentFrame); });

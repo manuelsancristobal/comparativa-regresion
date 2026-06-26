@@ -339,8 +339,9 @@ const LogisticRaceViz = (() => {
     onSpeedChange: (s) => { state.speed = s; }
   });
 
+  const toggleDiv = d3.select('#methods-logistic').append('div').attr('class', 'method-toggle');
   METHODS_ALL.forEach(method => {
-    d3.select('#methods-logistic').append('div').attr('class', 'toggle-item')
+    toggleDiv.append('div').attr('class', 'toggle-item')
       .html(`<input type="checkbox" id="toggle-log-${method}" checked>
         <label for="toggle-log-${method}"><span class="color-indicator" style="background: ${COLORS[method]}"></span> ${method.replace(/_/g, ' ')}</label>`)
       .select('input').on('change', function() { state.visibleMethods[method] = this.checked; update(state.currentFrame); });

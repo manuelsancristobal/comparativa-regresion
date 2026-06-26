@@ -179,3 +179,15 @@ const CommonUtils = (() => {
     TRANSITION_MS
   };
 })();
+
+// Detect if running inside an iframe (e.g., Jekyll embed) and apply class
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (window.self !== window.top) {
+      document.body.classList.add('is-iframe');
+    }
+  } catch (e) {
+    // Cross-origin iframe security error means it IS in an iframe
+    document.body.classList.add('is-iframe');
+  }
+});
