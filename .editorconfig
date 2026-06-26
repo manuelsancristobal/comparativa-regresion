@@ -19,7 +19,11 @@ indent_size = 4
 max_line_length = 120
 
 # Activos web: 2 espacios (convención del proyecto).
-[*.{js,css,html,json,yml,yaml}]
+[*.{js,css,scss,html,json,yml,yaml}]
+indent_size = 2
+
+# R: 2 espacios (convención tidyverse).
+[*.R]
 indent_size = 2
 
 # Makefile: requiere tabulaciones reales, no espacios.
